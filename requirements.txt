@@ -1,0 +1,17 @@
+transformers
+langchain==0.0.352
+langchain-openai
+sentence_transformers
+python-dotenv
+numexpr
+ipywidgets
+ipykernel
+pypdf
+aspose-words
+tiktoken
+faiss-cpu
+streamlit
+firebase-admin
+
+--index-url https://download.pytorch.org/whl/cu113
+torch==2.1.2

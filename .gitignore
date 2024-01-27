@@ -1,0 +1,21 @@
+# env
+.env*
+healthhack-store-firebase-adminsdk-sq7ne-32400d49de.json
+/venv
+
+# notebooks
+*.ipynb
+/.ipynb_checkpoints
+
+# docs
+/docs
+docs.zip
+
+# indexes
+indexes/
+
+# firebase
+.firebase
+
+# others
+*.log
