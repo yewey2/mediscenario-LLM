@@ -1,3 +1,5 @@
+__pycache__/
+
 # env
 .env*
 healthhack-store-firebase-adminsdk-sq7ne-32400d49de.json
@@ -19,3 +21,4 @@ indexes/
 
 # others
 *.log
+test*.py
