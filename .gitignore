@@ -6,7 +6,6 @@ healthhack-store-firebase-adminsdk-sq7ne-32400d49de.json
 /venv
 
 # notebooks
-test*.ipynb
 /.ipynb_checkpoints
 
 # docs
@@ -19,6 +18,11 @@ indexes/
 # firebase
 .firebase
 
-# others
+# logs and testing
 *.log
 test*.py
+test*.html
+test*.ipynb
+
+## Images
+*.png

@@ -1,10 +1,19 @@
 from openai import OpenAI
 import streamlit as st
+import streamlit.components.v1 as components
 import datetime
+
+
+# client = OpenAI(api_key=st.secrets['openai']["OPENAI_API_KEY"])
+
+from dotenv import load_dotenv
+import os
+load_dotenv()
+key = os.environ.get("OPENAI_API_KEY")
+client = OpenAI(api_key=key)
 
 st.title("ChatGPT-like clone")
 
-client = OpenAI(api_key=st.secrets['openai']["OPENAI_API_KEY"])
 
 if "openai_model" not in st.session_state:
     st.session_state["openai_model"] = "gpt-3.5-turbo"
@@ -17,6 +26,37 @@ if "messages_2" not in st.session_state:
 
 if "start_time" not in st.session_state:
     st.session_state.start_time = None
+
+## Testing HTML
+# html_string = """
+# <canvas></canvas>
+
+
+# <script>
+#     canvas = document.querySelector('canvas');
+#     canvas.width = 1024;
+#     canvas.height = 576;
+#     console.log(canvas);
+
+#     const c = canvas.getContext('2d');
+#     c.fillStyle = "green";
+#     c.fillRect(0,0,canvas.width,canvas.height);
+
+#     const img = new Image();
+#     img.src = "./tksfordumtrive.png";
+#     c.drawImage(img,  10, 10);
+# </script>
+
+# <style>
+#     body {
+#         margin: 0;
+#     }
+# </style>
+# """
+# components.html(html_string,
+#                 width=1280,
+#                 height=640)
+
 
 # Create two columns for the two chat interfaces
 col1, col2 = st.columns(2)
