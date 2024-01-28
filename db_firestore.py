@@ -5,8 +5,11 @@ from firebase_admin import credentials, storage
 import json, os, dotenv
 from dotenv import load_dotenv
 load_dotenv()
-
-os.environ["FIREBASE_CREDENTIAL"] = dotenv.get_key(dotenv.find_dotenv(), "FIREBASE_CREDENTIAL")
+try:
+    os.environ["FIREBASE_CREDENTIAL"] = dotenv.get_key(dotenv.find_dotenv(), "FIREBASE_CREDENTIAL")
+except TypeError:
+    import streamlit as st
+    os.environ["FIREBASE_CREDENTIAL"] = st.secrets["FIREBASE_CREDENTIAL"]
 cred = credentials.Certificate(json.loads(os.environ.get("FIREBASE_CREDENTIAL")))
 firebase_admin.initialize_app(cred,{'storageBucket': 'healthhack-store.appspot.com'}) # connecting to firebase
 
