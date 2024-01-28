@@ -7,6 +7,8 @@ from dotenv import load_dotenv
 load_dotenv()
 try:
     os.environ["FIREBASE_CREDENTIAL"] = dotenv.get_key(dotenv.find_dotenv(), "FIREBASE_CREDENTIAL")
+    if os.environ.get["FIREBASE_CREDENTIAL"] == None:
+        raise TypeError
 except TypeError:
     import streamlit as st
     os.environ["FIREBASE_CREDENTIAL"] = st.secrets["FIREBASE_CREDENTIAL"]
