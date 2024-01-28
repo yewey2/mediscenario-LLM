@@ -26,3 +26,6 @@ test*.ipynb
 
 ## Images
 *.png
+
+# streamlit
+.streamlit/secrets.toml

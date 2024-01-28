@@ -12,7 +12,7 @@ try:
 except TypeError:
     import streamlit as st
     os.environ["FIREBASE_CREDENTIAL"] = st.secrets["FIREBASE_CREDENTIAL"]
-cred = credentials.Certificate(json.loads(os.environ.get("FIREBASE_CREDENTIAL")))
+cred = credentials.Certificate(json.loads(os.environ.get("FIREBASE_CREDENTIAL"), strict=False))
 firebase_admin.initialize_app(cred,{'storageBucket': 'healthhack-store.appspot.com'}) # connecting to firebase
 
 

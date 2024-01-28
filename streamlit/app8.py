@@ -27,7 +27,6 @@ from langchain_core.output_parsers import StrOutputParser
 from langchain_core.runnables import RunnablePassthrough
 
 import langchain_community.embeddings.huggingface
-# help(langchain_community.embeddings.huggingface)
 from langchain_community.embeddings.huggingface import HuggingFaceBgeEmbeddings
 from langchain_community.vectorstores import FAISS
 
@@ -111,6 +110,11 @@ Question:
 Remember, answer in a short and sweet manner, don't talk too much.
 Your reply:
 """
+if "TEMPLATE" not in st.session_state:
+    st.session_state.TEMPLATE = TEMPLATE
+
+with st.expander("Patient Prompt"):
+    TEMPLATE = st.text_area("Patient Prompt", value=TEMPLATE)
 
 prompt = PromptTemplate(
     input_variables = ["question", "context"],
@@ -129,7 +133,9 @@ if "memory" not in st.session_state:
 memory = st.session_state.memory
 
 
-if "chain" not in st.session_state:
+if ("chain" not in st.session_state
+    or 
+    st.session_state.TEMPLATE != TEMPLATE):
     st.session_state.chain = (
     {
         "context": retriever | format_docs, 
@@ -205,6 +211,11 @@ Student's final diagnosis:
 
 Your grade:
 """
+if "TEMPLATE2" not in st.session_state:
+    st.session_state.TEMPLATE2 = TEMPLATE2
+
+with st.expander("Grader Prompt"):
+    TEMPLATE2 = st.text_area("Grader Prompt", value=TEMPLATE2)
 
 prompt2 = PromptTemplate(
     input_variables = ["question", "context", "history"],
@@ -227,7 +238,9 @@ memory2 = st.session_state.memory2
 def x(_): 
     return fake_history
 
-if "chain2" not in st.session_state:
+if ("chain2" not in st.session_state
+    or 
+    st.session_state.TEMPLATE2 != TEMPLATE2):
     st.session_state.chain2 = (
     {
         "context": retriever | format_docs, 
