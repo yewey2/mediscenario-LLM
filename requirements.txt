@@ -13,6 +13,4 @@ faiss-cpu
 streamlit
 firebase-admin
 plotly
-
---index-url https://download.pytorch.org/whl/cu113
 torch==2.1.2
