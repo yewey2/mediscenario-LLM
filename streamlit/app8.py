@@ -79,7 +79,7 @@ llm_gpt4 = st.session_state.llm_gpt4
 ## ------------------------------------------------------------------------------------------------
 ## Patient part
 
-index_name = "indexes/ChestPainQA"
+index_name = "indexes/Headache/QA"
 
 if "store" not in st.session_state:
     st.session_state.store = db.get_store(index_name, embeddings=embeddings)
@@ -150,7 +150,7 @@ sp_mapper = {"human":"student","ai":"patient"}
 ## ------------------------------------------------------------------------------------------------
 ## ------------------------------------------------------------------------------------------------
 ## Grader part
-index_name = "indexes/ChestPainRubrics"
+index_name = "indexes/Headache/Rubric"
 
 # store = FAISS.load_local(index_name, embeddings)
 
@@ -263,7 +263,13 @@ chain2 = st.session_state.chain2
 # client = OpenAI(api_key=key)
 
 st.title("UAT for PatientLLM and GraderLLM")
-st.title("Chest pain for now")
+st.title("Headache only, for now")
+
+if st.button("Clear History and Memory", type="primary"):
+    st.session_state.messages_1 = []
+    st.session_state.messages_2 = []
+    st.session_state.memory = ConversationSummaryBufferMemory(llm=llm, memory_key="chat_history", input_key="question" )
+    memory = st.session_state.memory
 
 ## Testing HTML
 # html_string = """
@@ -298,11 +304,10 @@ st.title("Chest pain for now")
 
 st.write("Timer has been removed, switch with this button")
 
-st.write("Buggy button, please double click")
-if st.button(f"Switch to {'PATIENT' if st.session_state.active_chat==2 else 'GRADER'}"):
+if st.button(f"Switch to {'PATIENT' if st.session_state.active_chat==2 else 'GRADER'}"+".... Buggy button, please double click"):
     st.session_state.active_chat = 3 - st.session_state.active_chat
 
-st.write(st.session_state.active_chat)
+# st.write("Currently in " + ('PATIENT' if st.session_state.active_chat==2 else 'GRADER'))
 
 # Create two columns for the two chat interfaces
 col1, col2 = st.columns(2)
@@ -316,8 +321,9 @@ with col1:
 
 # Second chat interface
 with col2:
-    st.write("pls dun spam this, its tons of tokens cos chat history")
+    # st.write("pls dun spam this, its tons of tokens cos chat history")
     st.subheader("Grader LLM")
+    st.write("grader takes a while to load... please be patient")
     for message in st.session_state.messages_2:
         with st.chat_message(message["role"]):
             st.markdown(message["content"])
