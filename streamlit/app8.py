@@ -37,6 +37,14 @@ import os, dotenv
 from dotenv import load_dotenv
 load_dotenv()
 
+if not os.path.isdir("../.streamlit"):
+    os.mkdir("../.streamlit")
+    print('made streamlit folder')
+if not os.path.isfile("../.streamlit/secrets.toml"):
+    with open("../.streamlit/secrets.toml", "w") as f:
+        f.write(os.environ.get("STREAMLIT_SECRETS"))
+    print('made new file')
+    
 
 ## Load from streamlit!!
 os.environ["HF_TOKEN"] = os.environ.get("HF_TOKEN") or st.secrets["HF_TOKEN"]
