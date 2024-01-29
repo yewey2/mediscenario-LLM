@@ -11,8 +11,6 @@ import inspect
 currentdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
 parentdir = os.path.dirname(currentdir)
 sys.path.append(parentdir)
-import db_firestore as db
-
 
 ## ----------------------------------------------------------------
 ## LLM Part
@@ -45,6 +43,8 @@ if not os.path.isfile("../.streamlit/secrets.toml"):
         f.write(os.environ.get("STREAMLIT_SECRETS"))
     print('made new file')
     
+
+import db_firestore as db
 
 ## Load from streamlit!!
 os.environ["HF_TOKEN"] = os.environ.get("HF_TOKEN") or st.secrets["HF_TOKEN"]
