@@ -154,6 +154,10 @@ Question:
 Remember, answer in a short and sweet manner, don't talk too much.
 Your reply:
 """
+
+with open('templates/patient.txt', 'r') as file: 
+    TEMPLATE = file.read()
+
 if "TEMPLATE" not in st.session_state:
     st.session_state.TEMPLATE = TEMPLATE
 
@@ -255,6 +259,10 @@ Student's final diagnosis:
 
 Your grade:
 """
+
+with open('templates/grader.txt', 'r') as file: 
+    TEMPLATE2 = file.read()
+
 if "TEMPLATE2" not in st.session_state:
     st.session_state.TEMPLATE2 = TEMPLATE2
 
