@@ -11,6 +11,8 @@ import inspect
 currentdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
 parentdir = os.path.dirname(currentdir)
 sys.path.append(parentdir)
+import db_firestore as db
+
 
 ## ----------------------------------------------------------------
 ## LLM Part
@@ -52,6 +54,40 @@ os.environ["OPENAI_API_KEY"] = os.environ.get("OPENAI_API_KEY") or st.secrets["O
 os.environ["FIREBASE_CREDENTIAL"] = os.environ.get("FIREBASE_CREDENTIAL") or st.secrets["FIREBASE_CREDENTIAL"]
 
 
+
+st.title("UAT for PatientLLM and GraderLLM")
+
+## Hardcode indexes for now, 
+indexes = """Bleeding
+ChestPain
+Dysphagia
+Headache
+ShortnessOfBreath
+Vomiting
+Warfarin
+Weakness
+Weakness2""".split("\n")
+
+if "selected_index" not in st.session_state:
+    st.session_state.selected_index = 3
+    
+if "index_selectbox" not in st.session_state:
+    st.session_state.index_selectbox = "Headache"
+
+index_selectbox = st.selectbox("Select index",indexes, index=int(st.session_state.selected_index))
+
+if index_selectbox != indexes[st.session_state.selected_index]:
+    st.session_state.selected_index = indexes.index(index_selectbox)
+    st.session_state.index_selectbox = index_selectbox
+    del st.session_state["store"]
+    del st.session_state["store2"]
+    del st.session_state["retriever"]
+    del st.session_state["retriever2"]
+    del st.session_state["chain"]
+    del st.session_state["chain2"]
+
+
+
 if "openai_model" not in st.session_state:
     st.session_state["openai_model"] = "gpt-3.5-turbo"
 
@@ -61,8 +97,8 @@ if "messages_1" not in st.session_state:
 if "messages_2" not in st.session_state:
     st.session_state.messages_2 = []
 
-if "start_time" not in st.session_state:
-    st.session_state.start_time = None
+# if "start_time" not in st.session_state:
+#     st.session_state.start_time = None
 
 if "active_chat" not in st.session_state:
     st.session_state.active_chat = 1
@@ -87,7 +123,7 @@ llm_gpt4 = st.session_state.llm_gpt4
 ## ------------------------------------------------------------------------------------------------
 ## Patient part
 
-index_name = "indexes/Headache/QA"
+index_name = f"indexes/{st.session_state.index_selectbox}/QA"
 
 if "store" not in st.session_state:
     st.session_state.store = db.get_store(index_name, embeddings=embeddings)
@@ -158,7 +194,7 @@ sp_mapper = {"human":"student","ai":"patient"}
 ## ------------------------------------------------------------------------------------------------
 ## ------------------------------------------------------------------------------------------------
 ## Grader part
-index_name = "indexes/Headache/Rubric"
+index_name = f"indexes/{st.session_state.index_selectbox}/Rubric"
 
 # store = FAISS.load_local(index_name, embeddings)
 
@@ -189,7 +225,7 @@ Some additional information that is useful to understand the rubrics:
 
 =================================================================
 
-
+e
 Here are the rubrics for grading the student:
 <rubrics>
 
@@ -270,8 +306,6 @@ chain2 = st.session_state.chain2
 # key = os.environ.get("OPENAI_API_KEY")
 # client = OpenAI(api_key=key)
 
-st.title("UAT for PatientLLM and GraderLLM")
-st.title("Headache only, for now")
 
 if st.button("Clear History and Memory", type="primary"):
     st.session_state.messages_1 = []
@@ -399,4 +433,3 @@ if text_prompt:
 #             count_down(int(time_in_seconds))
 # if __name__ == '__main__':
 #     main()
-            
