@@ -1,4 +1,13 @@
-
+---
+title: Mediscenario Streamlit
+emoji: 📈
+colorFrom: red
+colorTo: indigo
+sdk: streamlit
+sdk_version: 1.30.0
+app_file: app.py
+pinned: false
+---
 
 ## To test the LLM only 
 Download the relevant LLM python notebooks (e.g. `LLM for Patient.ipynb`)
