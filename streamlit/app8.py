@@ -17,7 +17,7 @@ import db_firestore as db
 ## ----------------------------------------------------------------
 ## LLM Part
 import openai
-from langchain_openai import ChatOpenAI, OpenAIEmbeddings
+from langchain_openai import ChatOpenAI, OpenAI, OpenAIEmbeddings
 import tiktoken
 from langchain.prompts.few_shot import FewShotPromptTemplate
 from langchain.prompts.prompt import PromptTemplate
@@ -31,7 +31,7 @@ from langchain_community.embeddings.huggingface import HuggingFaceBgeEmbeddings
 from langchain_community.vectorstores import FAISS
 
 from langchain.chains import LLMChain
-from langchain.chains.conversation.memory import ConversationBufferMemory, ConversationBufferWindowMemory, ConversationSummaryMemory, ConversationSummaryBufferMemory
+from langchain.chains.conversation.memory import ConversationBufferWindowMemory #, ConversationBufferMemory, ConversationSummaryMemory, ConversationSummaryBufferMemory
 
 import os, dotenv
 from dotenv import load_dotenv
@@ -114,8 +114,11 @@ if "embeddings" not in st.session_state:
         encode_kwargs = encode_kwargs)
 embeddings = st.session_state.embeddings
 if "llm" not in st.session_state:
-    st.session_state.llm = ChatOpenAI(model_name="gpt-3.5-turbo", temperature=0)
+    st.session_state.llm = ChatOpenAI(model_name="gpt-3.5-turbo-1106", temperature=0)
 llm = st.session_state.llm
+if "llm_i" not in st.session_state:
+    st.session_state.llm_i = OpenAI(model_name="gpt-3.5-turbo-instruct", temperature=0)
+llm_i = st.session_state.llm_i
 if "llm_gpt4" not in st.session_state:
     st.session_state.llm_gpt4 = ChatOpenAI(model_name="gpt-4-1106-preview", temperature=0)
 llm_gpt4 = st.session_state.llm_gpt4
@@ -129,40 +132,13 @@ if "store" not in st.session_state:
     st.session_state.store = db.get_store(index_name, embeddings=embeddings)
 store = st.session_state.store
 
-TEMPLATE = """You are a patient undergoing a medical check-up. You will be given the following:
-1. A context to answer the doctor, for your possible symptoms.
-2. A question about your current symptoms.
-
-Your task is to answer the doctor's questions as simple as possible, acting like a patient.
-Do not include other symptoms that are not included in the context, which provides your symptoms.
-
-Answer the question to the point, without any elaboration if you're not prodded with it.
-
-As you are a patient, you do not know any medical jargon or lingo. Do not include specific medical terms in your reply.
-You only know colloquial words for medical terms. 
-For example, you should not reply with "dysarthria", but instead with "cannot speak properly". 
-For example, you should not reply with "syncope", but instead with "fainting". 
-
-Here is the context:
-{context}
-
-----------------------------------------------------------------
-You are to reply the doctor's following question, with reference to the above context.
-Question:
-{question}
-----------------------------------------------------------------
-Remember, answer in a short and sweet manner, don't talk too much.
-Your reply:
-"""
-
-with open('templates/patient.txt', 'r') as file: 
-    TEMPLATE = file.read()
-
 if "TEMPLATE" not in st.session_state:
+    with open('templates/patient.txt', 'r') as file: 
+        TEMPLATE = file.read()
     st.session_state.TEMPLATE = TEMPLATE
 
 with st.expander("Patient Prompt"):
-    TEMPLATE = st.text_area("Patient Prompt", value=TEMPLATE)
+    TEMPLATE = st.text_area("Patient Prompt", value=st.session_state.TEMPLATE)
 
 prompt = PromptTemplate(
     input_variables = ["question", "context"],
@@ -177,7 +153,9 @@ def format_docs(docs):
 
 
 if "memory" not in st.session_state:
-    st.session_state.memory = ConversationSummaryBufferMemory(llm=llm, memory_key="chat_history", input_key="question" )
+    st.session_state.memory = ConversationBufferWindowMemory(
+        llm=llm, memory_key="chat_history", input_key="question", 
+        k=5, human_prefix="student", ai_prefix="patient",)
 memory = st.session_state.memory
 
 
@@ -200,74 +178,17 @@ sp_mapper = {"human":"student","ai":"patient"}
 ## Grader part
 index_name = f"indexes/{st.session_state.index_selectbox}/Rubric"
 
-# store = FAISS.load_local(index_name, embeddings)
-
 if "store2" not in st.session_state:
     st.session_state.store2 = db.get_store(index_name, embeddings=embeddings)
 store2 = st.session_state.store2
 
-TEMPLATE2 = """You are a teacher for medical students. You are grading a medical student on their OSCE, the Object Structured Clinical Examination.
-
-Your task is to provide an overall assessment of a student's diagnosis, based on the rubrics provided.
-You will be provided with the following information:
-1. The rubrics that the student should be judged based upon.
-2. The conversation history between the medical student and the patient.
-3. The final diagnosis that the student will make.
-
-=================================================================
-
-Your task is as follows:
-1. Your grading should touch on every part of the rubrics, and grade the student holistically.
-Finally, provide an overall grade for the student.
-
-Some additional information that is useful to understand the rubrics:
-- The rubrics are segmented, with each area separated by dashes, such as "----------" 
-- There will be multiple segments on History Taking. For each segment, the rubrics and corresponding grades will be provided below the required history taking.
-- For History Taking, you are to grade the student based on the rubrics, by checking the chat history between the patients and the medical student.
-- There is an additional segment on Presentation, differentials, and diagnosis. The 
-
-
-=================================================================
-
-e
-Here are the rubrics for grading the student:
-<rubrics>
-
-{context}
-
-</rubrics>
-
-=================================================================
-You are to give a comprehensive judgement based on the student's diagnosis, with reference to the above rubrics.
-
-Here is the chat history between the medical student and the patient:
-
-<history>
-
-{history}
-
-</history>
-=================================================================
-
-
-Student's final diagnosis:
-<diagnosis>
-    {question}
-</diagnosis>
-
-=================================================================
-
-Your grade:
-"""
-
-with open('templates/grader.txt', 'r') as file: 
-    TEMPLATE2 = file.read()
-
 if "TEMPLATE2" not in st.session_state:
+    with open('templates/grader.txt', 'r') as file: 
+        TEMPLATE2 = file.read()
     st.session_state.TEMPLATE2 = TEMPLATE2
 
 with st.expander("Grader Prompt"):
-    TEMPLATE2 = st.text_area("Grader Prompt", value=TEMPLATE2)
+    TEMPLATE2 = st.text_area("Grader Prompt", value=st.session_state.TEMPLATE2)
 
 prompt2 = PromptTemplate(
     input_variables = ["question", "context", "history"],
@@ -283,10 +204,6 @@ def format_docs(docs):
 
 fake_history = '\n'.join([(sp_mapper.get(i.type, i.type) + ": "+ i.content) for i in memory.chat_memory.messages])
 
-if "memory2" not in st.session_state:
-    st.session_state.memory2 = ConversationSummaryBufferMemory(llm=llm, memory_key="chat_history", input_key="question" )
-memory2 = st.session_state.memory2
-
 def x(_): 
     return fake_history
 
@@ -300,7 +217,19 @@ if ("chain2" not in st.session_state
         "question": RunnablePassthrough(),
         } | 
 
-    LLMChain(llm=llm, prompt=prompt2, memory=memory, verbose=False)
+        # LLMChain(llm=llm_i, prompt=prompt2, verbose=False ) #|
+        LLMChain(llm=llm_i, prompt=prompt2, verbose=False ) #|
+        | {
+            "json": itemgetter("text"),
+            "text": (
+                LLMChain(
+                    llm=llm, 
+                    prompt=PromptTemplate(
+                        input_variables=["text"],
+                        template="Interpret the following JSON of the student's grades, and do a write-up for each section.\n\n```json\n{text}\n```"),
+                        verbose=False)
+                )
+    }
 )
 chain2 = st.session_state.chain2
 
@@ -318,7 +247,7 @@ chain2 = st.session_state.chain2
 if st.button("Clear History and Memory", type="primary"):
     st.session_state.messages_1 = []
     st.session_state.messages_2 = []
-    st.session_state.memory = ConversationSummaryBufferMemory(llm=llm, memory_key="chat_history", input_key="question" )
+    st.session_state.memory = ConversationBufferWindowMemory(llm=llm, memory_key="chat_history", input_key="question" )
     memory = st.session_state.memory
 
 ## Testing HTML
@@ -417,7 +346,7 @@ if text_prompt:
             if st.session_state.active_chat==1:
                 full_response = chain.invoke(text_prompt).get("text")
             else:
-                full_response = chain2.invoke(text_prompt).get("text")
+                full_response = chain2.invoke(text_prompt).get("text").get("text")
             message_placeholder.markdown(full_response)
             messages.append({"role": "assistant", "content": full_response})
 
