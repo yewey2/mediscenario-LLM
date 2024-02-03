@@ -37,11 +37,11 @@ import os, dotenv
 from dotenv import load_dotenv
 load_dotenv()
 
-if not os.path.isdir("../.streamlit"):
-    os.mkdir("../.streamlit")
+if not os.path.isdir("./.streamlit"):
+    os.mkdir("./.streamlit")
     print('made streamlit folder')
-if not os.path.isfile("../.streamlit/secrets.toml"):
-    with open("../.streamlit/secrets.toml", "w") as f:
+if not os.path.isfile("./.streamlit/secrets.toml"):
+    with open("./.streamlit/secrets.toml", "w") as f:
         f.write(os.environ.get("STREAMLIT_SECRETS"))
     print('made new file')
     
@@ -64,7 +64,6 @@ Dysphagia
 Headache
 ShortnessOfBreath
 Vomiting
-Warfarin
 Weakness
 Weakness2""".split("\n")
 
@@ -89,7 +88,7 @@ if index_selectbox != indexes[st.session_state.selected_index]:
 
 
 if "openai_model" not in st.session_state:
-    st.session_state["openai_model"] = "gpt-3.5-turbo"
+    st.session_state["openai_model"] = "gpt-3.5-turbo-1106"
 
 if "messages_1" not in st.session_state:
     st.session_state.messages_1 = []
@@ -171,7 +170,7 @@ if ("chain" not in st.session_state
 )
 chain = st.session_state.chain
 
-sp_mapper = {"human":"student","ai":"patient"}
+sp_mapper = {"human":"student","ai":"patient", "user":"student","assistant":"patient"}
 
 ## ------------------------------------------------------------------------------------------------
 ## ------------------------------------------------------------------------------------------------
@@ -202,9 +201,11 @@ def format_docs(docs):
     return "\n--------------------\n".join(doc.page_content for doc in docs)
 
 
-fake_history = '\n'.join([(sp_mapper.get(i.type, i.type) + ": "+ i.content) for i in memory.chat_memory.messages])
+# fake_history = '\n'.join([(sp_mapper.get(i.type, i.type) + ": "+ i.content) for i in memory.chat_memory.messages])
+fake_history = '\n'.join([(sp_mapper.get(i['role'], i['role']) + ": "+ i['content']) for i in st.session_state.messages_1])
+st.write(fake_history)
 
-def x(_): 
+def y(_): 
     return fake_history
 
 if ("chain2" not in st.session_state
@@ -213,7 +214,7 @@ if ("chain2" not in st.session_state
     st.session_state.chain2 = (
     {
         "context": retriever | format_docs, 
-        "history": x,
+        "history": y,
         "question": RunnablePassthrough(),
         } | 
 
@@ -333,6 +334,16 @@ else:
     messages = st.session_state.messages_2
 
 
+from langchain.callbacks.manager import tracing_v2_enabled
+from uuid import uuid4
+import os
+
+os.environ['LANGCHAIN_TRACING_V2']='true'
+os.environ['LANGCHAIN_ENDPOINT']='https://api.smith.langchain.com'
+os.environ['LANGCHAIN_API_KEY']='ls__4ad767c45b844e6a8d790e12f556d3ca'
+os.environ['LANGCHAIN_PROJECT']='streamlit'
+
+
 if text_prompt:
     messages.append({"role": "user", "content": text_prompt})
     
@@ -343,10 +354,11 @@ if text_prompt:
     with (col1 if st.session_state.active_chat == 1 else col2):
         with st.chat_message("assistant"):
             message_placeholder = st.empty()
-            if st.session_state.active_chat==1:
-                full_response = chain.invoke(text_prompt).get("text")
-            else:
-                full_response = chain2.invoke(text_prompt).get("text").get("text")
+            with tracing_v2_enabled(project_name = "streamlit"):
+                if st.session_state.active_chat==1:
+                    full_response = chain.invoke(text_prompt).get("text")
+                else:
+                    full_response = chain2.invoke(text_prompt).get("text").get("text")
             message_placeholder.markdown(full_response)
             messages.append({"role": "assistant", "content": full_response})
 
@@ -370,3 +382,7 @@ if text_prompt:
 #             count_down(int(time_in_seconds))
 # if __name__ == '__main__':
 #     main()
+            
+st.write('fake history is:')
+st.write(y(""))
+st.write('done')

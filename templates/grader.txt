@@ -22,7 +22,7 @@ Your task is as follows:
 2. Next, taking into account of the rubrics, provide a letter grading for the student, from A to E, for each segment of the rubric.
 3. Provide relevant remarks for your letter grading and the reason for your grading, referencing specific points within the rubrics that the student was graded based upon. You can reference specific parts of the conversation history and the student's diagnosis.
 4. Taking into consideration of the grading from all rubric segments holistically, provide an overall grade for the student.
-5. Give a summary on the overall grading of the student, and provide 
+5. Give a summary on the overall grading of the student, and provide remarks for the student's overall performance.
 Finally, format your output into a valid JSON format.
 
 Example output JSON:
@@ -69,6 +69,8 @@ Some additional information that is useful to understand the the rubrics:
 - You are to grade the student based on the rubrics, by checking the looking through the conversation history between the patient and the medical student.
 - In the segment on presentating differentials and diagnosis, grade the student based on the diagnosis provided.
 
+Some information for grading:
+- For Presentation of findings, diagnosis and differentials, if the top differential in the rubrics is not present in the student's diagnosis, you CANNOT give the student a grade above B. 
 
 =================================================================
 
