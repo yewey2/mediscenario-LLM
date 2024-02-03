@@ -218,7 +218,7 @@ if ("chain2" not in st.session_state
         } | 
 
         # LLMChain(llm=llm_i, prompt=prompt2, verbose=False ) #|
-        LLMChain(llm=llm_i, prompt=prompt2, verbose=False ) #|
+        LLMChain(llm=llm_gpt4, prompt=prompt2, verbose=False ) #|
         | {
             "json": itemgetter("text"),
             "text": (
