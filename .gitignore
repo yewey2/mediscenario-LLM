@@ -24,8 +24,5 @@ test*.py
 test*.html
 test*.ipynb
 
-## Images
-*.png
-
 # streamlit
 .streamlit/secrets.toml

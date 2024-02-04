@@ -30,25 +30,25 @@ Example output JSON:
     {{{{
         "history_presenting_complain": {{{{
             "grade": "A",
-            "remarks": "Your remarks here""
+            "remarks": "Your remarks here"
         }}}}
     }}}},
     {{{{
         "history_associated_symptoms": {{{{
             "grade": "B",
-            "remarks": "Your remarks here""
+            "remarks": "Your remarks here"
         }}}}
     }}}},
     {{{{
         "history_others": {{{{
             "grade": "C",
-            "remarks": "Your remarks here""
+            "remarks": "Your remarks here"
         }}}}
     }}}},
     {{{{
         "diagnosis_and_differentials": {{{{
             "grade": "D",
-            "remarks": "Your remarks here""
+            "remarks": "Your remarks here"
         }}}}
     }}}},
     {{{{

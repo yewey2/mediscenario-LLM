@@ -5,28 +5,21 @@ colorFrom: red
 colorTo: indigo
 sdk: streamlit
 sdk_version: 1.30.0
-app_file: app.py
+app_file: app_final.py
 pinned: false
 ---
 
-## To test the LLM only 
-Download the relevant LLM python notebooks (e.g. `LLM for Patient.ipynb`)
+## How to run locally
 
-Add your own .env file in the same directory as the notebook
+1. git clone
 
-Run :)
+2. `python -m pip install -r requirements.txt`
 
-----------------------------------------------------------------
-# How to run locally
+3. Add your own .env file based on the env.example (huggingface, openai, firebase tokens required)
 
-git pull everything down
+4. `streamlit run app.py`
 
-`python -m pip install -r requirements.txt`
+5. Open `localhost:8501`
 
-Add your own .env file based on the env.example (huggingface, openai, firebase tokens required)
-
-???
-
-profit
 
 --------------------------------- 
