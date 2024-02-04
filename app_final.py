@@ -284,6 +284,7 @@ else:
                 #     rows.extend(st.columns(total_cols))
 
                 st.header(f"Selected Scenario: {st.session_state.scenario_list[st.session_state.selected_scenario] if st.session_state.selected_scenario>=0 else 'None'}")
+                st.button("Generate a new scenario")
                 for i, scenario in enumerate(st.session_state.scenario_list):
                     if i % total_cols == 0:
                         rows.extend(st.columns(total_cols))
