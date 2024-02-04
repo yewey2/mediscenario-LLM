@@ -48,6 +48,18 @@ if not os.path.isfile("./.streamlit/secrets.toml"):
         f.write(os.environ.get("STREAMLIT_SECRETS"))
     print('made new file')
     
+import os, dotenv
+from dotenv import load_dotenv
+load_dotenv()
+
+if not os.path.isdir("./.streamlit"):
+    os.mkdir("./.streamlit")
+    print('made streamlit folder')
+if not os.path.isfile("./.streamlit/secrets.toml"):
+    with open("./.streamlit/secrets.toml", "w") as f:
+        f.write(os.environ.get("STREAMLIT_SECRETS"))
+    print('made new file')
+    
 
 import db_firestore as db
 
@@ -532,7 +544,8 @@ else:
                 
         elif st.session_state.scenario_tab_index == ScenarioTabIndex.PATIENT_LLM:
             st.header("Patient info")
-            st.write("Pull the info here!!!")
+            ## TODO: Put the patient's info here, from SCENARIO
+            # st.write("Pull the info here!!!")
             col1, col2, col3 = st.columns([1,3,1])
             with col1:
                 back_to_scenario_btn = st.button("Back to selection", on_click=set_scenario_tab_index, args=[ScenarioTabIndex.SELECT_SCENARIO])
@@ -712,7 +725,6 @@ else:
         import plotly.graph_objects as go
         import pandas as pd
 
-        os.environ["FIREBASE_CREDENTIAL"] = dotenv.get_key(dotenv.find_dotenv(), "FIREBASE_CREDENTIAL")
         cred = credentials.Certificate(json.loads(os.environ.get("FIREBASE_CREDENTIAL")))
 
         # Initialize Firebase (if not already initialized)

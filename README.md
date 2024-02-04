@@ -21,5 +21,9 @@ pinned: false
 
 5. Open `localhost:8501`
 
+Login with
+- username: admin, password: admin
+OR
+- username: student1, password: password
 
 --------------------------------- 
