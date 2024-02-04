@@ -243,17 +243,6 @@ else:
             st.rerun()
 
     scenario_tab, dashboard_tab = st.tabs(["Training", "Dashboard"])
-    # st.header("head")
-    # st.markdown("## markdown")
-    # st.caption("caption")
-    # st.divider()
-    # import pandas as pd
-    # import numpy as np
-    # map_data = pd.DataFrame(
-    #     np.random.randn(1000, 2) / [50, 50] + [37.76, -122.4],
-    #     columns=['lat', 'lon'])
-
-    # st.map(map_data)
 
     class ScenarioTabIndex:
         SELECT_SCENARIO = 0
@@ -263,9 +252,6 @@ else:
     def set_scenario_tab_index(x):
         st.session_state.scenario_tab_index=x
         return None
-    
-    # def select_scenario_and_change_tab(_):
-    #     set_scenario_tab_index(ScenarioTabIndex.PATIENT_LLM)
     
     def go_to_patient_llm():
         selected_scenario = st.session_state.get('selected_scenario')
@@ -283,264 +269,272 @@ else:
         set_scenario_tab_index(ScenarioTabIndex.SELECT_SCENARIO)
         
     with scenario_tab:
-        ## Check in select scenario
-        if st.session_state.scenario_tab_index == ScenarioTabIndex.SELECT_SCENARIO:
-            def change_scenario(scenario_index):
-                st.session_state.selected_scenario = scenario_index
-            if st.session_state.get("selected_scenario", None) is None:
-                st.session_state.selected_scenario = -1
-            
-            total_cols = 3
-            rows = list()
-            # for _ in range(0, number_of_indexes, total_cols):
-            #     rows.extend(st.columns(total_cols))
-
-            st.header(f"Selected Scenario: {st.session_state.scenario_list[st.session_state.selected_scenario] if st.session_state.selected_scenario>=0 else 'None'}")
-            for i, scenario in enumerate(st.session_state.scenario_list):
-                if i % total_cols == 0:
-                    rows.extend(st.columns(total_cols))
-                curr_col = rows[(-total_cols + i % total_cols)]
-                tile = curr_col.container(height=120)
-                ## TODO: Implement highlight box if index is selected
-                # if st.session_state.selected_scenario == i:
-                #     tile.markdown("<style>background: pink !important;</style>", unsafe_allow_html=True)
-                tile.write(":balloon:")
-                tile.button(label=scenario, on_click=change_scenario, args=[i])
-
-            select_scenario_btn = st.button("Select Scenario", on_click=go_to_patient_llm, args=[])
+        ## 
+        if True:
+            ## Check in select scenario
+            if st.session_state.scenario_tab_index == ScenarioTabIndex.SELECT_SCENARIO:
+                def change_scenario(scenario_index):
+                    st.session_state.selected_scenario = scenario_index
+                if st.session_state.get("selected_scenario", None) is None:
+                    st.session_state.selected_scenario = -1
                 
-        elif st.session_state.scenario_tab_index == ScenarioTabIndex.PATIENT_LLM:
-            st.header("Patient info")
-            ## TODO: Put the patient's info here, from SCENARIO
-            # st.write("Pull the info here!!!")
-            col1, col2, col3 = st.columns([1,3,1])
-            with col1:
-                back_to_scenario_btn = st.button("Back to selection", on_click=set_scenario_tab_index, args=[ScenarioTabIndex.SELECT_SCENARIO])
-            # with col3: 
-            #     start_timer_button = st.button("START")
+                total_cols = 3
+                rows = list()
+                # for _ in range(0, number_of_indexes, total_cols):
+                #     rows.extend(st.columns(total_cols))
 
-            with col2:
-                TIME_LIMIT = 60*10 ## to change to 10 minutes
-                time.sleep(1)
-                # if start_timer_button:
-                #     st.session_state.start_time = datetime.datetime.now()
-                # st.session_state.time = -1 if not st.session_state.get('time') else st.session_state.get('time') 
-                st.session_state.start_time = False if not st.session_state.get('start_time') else st.session_state.start_time
+                st.header(f"Selected Scenario: {st.session_state.scenario_list[st.session_state.selected_scenario] if st.session_state.selected_scenario>=0 else 'None'}")
+                for i, scenario in enumerate(st.session_state.scenario_list):
+                    if i % total_cols == 0:
+                        rows.extend(st.columns(total_cols))
+                    curr_col = rows[(-total_cols + i % total_cols)]
+                    tile = curr_col.container(height=120)
+                    ## TODO: Implement highlight box if index is selected
+                    # if st.session_state.selected_scenario == i:
+                    #     tile.markdown("<style>background: pink !important;</style>", unsafe_allow_html=True)
+                    tile.write(":balloon:")
+                    tile.button(label=scenario, on_click=change_scenario, args=[i])
+
+                select_scenario_btn = st.button("Select Scenario", on_click=go_to_patient_llm, args=[])
                     
-                from streamlit.components.v1 import html
+            elif st.session_state.scenario_tab_index == ScenarioTabIndex.PATIENT_LLM:
+                st.header("Patient info")
+                ## TODO: Put the patient's info here, from SCENARIO
+                # st.write("Pull the info here!!!")
+                col1, col2, col3 = st.columns([1,3,1])
+                with col1:
+                    back_to_scenario_btn = st.button("Back to selection", on_click=set_scenario_tab_index, args=[ScenarioTabIndex.SELECT_SCENARIO])
+                # with col3: 
+                #     start_timer_button = st.button("START")
 
-                
-                html(f"""
-                    <style>
-                    @import url('https://fonts.googleapis.com/css2?family=Pixelify+Sans&display=swap');
-                    @import url('https://fonts.googleapis.com/css2?family=VT323&display=swap');
-                    @import url('https://fonts.googleapis.com/css2?family=Monofett&display=swap');
-            </style>
+                with col2:
+                    TIME_LIMIT = 60*10 ## to change to 10 minutes
+                    time.sleep(1)
+                    # if start_timer_button:
+                    #     st.session_state.start_time = datetime.datetime.now()
+                    # st.session_state.time = -1 if not st.session_state.get('time') else st.session_state.get('time') 
+                    st.session_state.start_time = False if not st.session_state.get('start_time') else st.session_state.start_time
+                        
+                    from streamlit.components.v1 import html
 
-            <style>
-                html {{
-                    font-family: 'Pixelify Sans', monospace, serif;
-                    font-family: 'VT323', monospace, sans-serif;
-                    font-family: 'Monofett', monospace, sans-serif;
-                    font-family: 'Times New Roman', sans-serif;
-                    background-color: #0E1117 !important;
-                    color: RGB(250,250,250);
-                    // border-radius: 25%;
-                    // border: 1px solid #0E1117;
-                }}
-                html, body {{
-                    // background-color: transparent !important;
-                    // margin: 10px;
-                    // border: 1px solid pink;
-                    text-align: center;
-                }}
-                body {{
-                    background-color: #0E1117;
-                    // margin: 10px;
-                    // border: 1px solid pink;
-                }}
-                
-                body #ttime {{
-                    font-weight: bold;
-                    font-family: 'VT323', monospace, sans-serif;
-                    // font-family: 'Pixelify Sans', monospace, serif;
-                }}
-            </style>
+                    
+                    html(f"""
+                        <style>
+                        @import url('https://fonts.googleapis.com/css2?family=Pixelify+Sans&display=swap');
+                        @import url('https://fonts.googleapis.com/css2?family=VT323&display=swap');
+                        @import url('https://fonts.googleapis.com/css2?family=Monofett&display=swap');
+                </style>
 
-            <div>
-                <h1>Time left</h1>
-                <h1 id="ttime"> </h1>
+                <style>
+                    html {{
+                        font-family: 'Pixelify Sans', monospace, serif;
+                        font-family: 'VT323', monospace, sans-serif;
+                        font-family: 'Monofett', monospace, sans-serif;
+                        font-family: 'Times New Roman', sans-serif;
+                        background-color: #0E1117 !important;
+                        color: RGB(250,250,250);
+                        // border-radius: 25%;
+                        // border: 1px solid #0E1117;
+                    }}
+                    html, body {{
+                        // background-color: transparent !important;
+                        // margin: 10px;
+                        // border: 1px solid pink;
+                        text-align: center;
+                    }}
+                    body {{
+                        background-color: #0E1117;
+                        // margin: 10px;
+                        // border: 1px solid pink;
+                    }}
+                    
+                    body #ttime {{
+                        font-weight: bold;
+                        font-family: 'VT323', monospace, sans-serif;
+                        // font-family: 'Pixelify Sans', monospace, serif;
+                    }}
+                </style>
+
+                <div>
+                    <h1>Time left</h1>
+                    <h1 id="ttime"> </h1>
+                </div>
+
+
+                <script>
+
+                var x = setInterval(function() {{
+                    var start_time_str = "{st.session_state.start_time}";
+                    var start_date = new Date(start_time_str);
+                    var curr_date = new Date();
+                    var time_difference = curr_date - start_date;
+                    var time_diff_secs = Math.floor(time_difference / 1000);
+                    var time_left = {TIME_LIMIT} - time_diff_secs;
+                    var mins = Math.floor(time_left / 60);
+                    var secs = time_left % 60;
+                    var fmins = mins.toString().padStart(2, '0');
+                    var fsecs = secs.toString().padStart(2, '0');
+                    console.log("run");
+
+                    if (start_time_str == "False") {{
+                        document.getElementById("ttime").innerHTML = 'Press "Start" to start!';
+                        clearInterval(x);
+                    }}
+                    else if (time_left <= 0) {{
+                        document.getElementById("ttime").innerHTML = "Time's Up!!!";
+                        clearInterval(x);
+                    }}
+                    else {{
+                        document.getElementById("ttime").innerHTML = `${{fmins}}:${{fsecs}}`;
+                    }}
+                }}, 999)
+
+                </script>
+                        """,
+                        )
+
+                with open("./public/chars/Female_talk.gif", "rb") as f:
+                    contents = f.read()
+                student_url = base64.b64encode(contents).decode("utf-8")
+                    
+                with open("./public/chars/Male_talk.gif", "rb") as f:
+                    contents = f.read()
+                patient_url = base64.b64encode(contents).decode("utf-8")
+                interactive_container = st.container()
+                user_input_col ,r = st.columns([4,1])
+                def to_grader_llm():
+                    init_grader_llm()
+                    set_scenario_tab_index(ScenarioTabIndex.GRADER_LLM)
+
+                with r:
+                    to_grader_btn = st.button("To Grader", on_click=to_grader_llm)
+                with user_input_col:
+                    user_inputs = st.text_input("", placeholder="Chat with the patient here!", key="user_inputs")
+                    if user_inputs:
+                        response = st.session_state.chain.invoke(user_inputs).get("text")
+                        st.session_state.patient_response = response
+                with interactive_container:
+                    html(f"""
+    <style>
+        body {{
+            font-family: 'VT323', monospace, sans-serif;
+        }}
+
+        .conversation-container {{
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            grid-template-rows: 1fr 1fr;
+            gap: 10px;
+            width: calc(100% - 20px);
+            height: calc(100% - 20px);
+            background-color: #add8e6; /* Soothing blue background */
+            padding: 10px;
+        }}
+        
+        .doctor-image {{
+            grid-column: 1;
+            grid-row: 2;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }}
+
+        .patient-image {{
+            grid-column: 2;
+            grid-row: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }}
+
+        .doctor-input {{
+            grid-column: 2;
+            grid-row: 2;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }}
+
+        .patient-input {{
+            grid-column: 1;
+            grid-row: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }}
+
+        img {{
+            max-width: 100%;
+            height: auto;
+            border-radius: 8px; /* Rounded corners for the images */
+        }}
+
+        input[type="text"] {{
+            width: 90%;
+            padding: 10px;
+            margin: 10px;
+            border: none;
+            border-radius: 5px;
+        }}
+    </style>
+    </head>
+    <body>
+        <div class="conversation-container">
+            <div class="doctor-image">
+                <img src="data:image/png;base64,{student_url}" alt="Doctor" />
             </div>
+            <div class="patient-image">
+                <img src="data:image/gif;base64,{patient_url}" alt="Patient" />
+            </div>
+            <div class="doctor-input">
+                    <span id="doctor_message">You: {st.session_state.get('user_inputs') or ''}</span>
+            </div>
+            <div class="patient-input">
+                    <span id="patient_message">{'Patient: '+st.session_state.get('patient_response') if st.session_state.get('patient_response') else '...'}</span>
+            </div>
+        </div>
+    </body>
+    </html>
 
-
-            <script>
-
-            var x = setInterval(function() {{
-                var start_time_str = "{st.session_state.start_time}";
-                var start_date = new Date(start_time_str);
-                var curr_date = new Date();
-                var time_difference = curr_date - start_date;
-                var time_diff_secs = Math.floor(time_difference / 1000);
-                var time_left = {TIME_LIMIT} - time_diff_secs;
-                var mins = Math.floor(time_left / 60);
-                var secs = time_left % 60;
-                var fmins = mins.toString().padStart(2, '0');
-                var fsecs = secs.toString().padStart(2, '0');
-                console.log("run");
-
-                if (start_time_str == "False") {{
-                    document.getElementById("ttime").innerHTML = 'Press "Start" to start!';
-                    clearInterval(x);
-                }}
-                else if (time_left <= 0) {{
-                    document.getElementById("ttime").innerHTML = "Time's Up!!!";
-                    clearInterval(x);
-                }}
-                else {{
-                    document.getElementById("ttime").innerHTML = `${{fmins}}:${{fsecs}}`;
-                }}
-            }}, 999)
-
-            </script>
-                    """,
-                    )
-
-            with open("./public/chars/Female_talk.gif", "rb") as f:
-                contents = f.read()
-            student_url = base64.b64encode(contents).decode("utf-8")
+    """, height=500)
                 
-            with open("./public/chars/Male_talk.gif", "rb") as f:
-                contents = f.read()
-            patient_url = base64.b64encode(contents).decode("utf-8")
-            interactive_container = st.container()
-            user_input_col ,r = st.columns([4,1])
-            def to_grader_llm():
-                init_grader_llm()
-                set_scenario_tab_index(ScenarioTabIndex.GRADER_LLM)
-
-            with r:
-                to_grader_btn = st.button("To Grader", on_click=to_grader_llm)
-            with user_input_col:
-                user_inputs = st.text_input("", placeholder="Chat with the patient here!", key="user_inputs")
-                if user_inputs:
-                    response = st.session_state.chain.invoke(user_inputs).get("text")
-                    st.session_state.patient_response = response
-            with interactive_container:
-                html(f"""
-<style>
-    .conversation-container {{
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        grid-template-rows: 1fr 1fr;
-        gap: 10px;
-        width: 100%;
-        height: 100%;
-        background-color: #add8e6; /* Soothing blue background */
-    }}
-    
-    .doctor-image {{
-        grid-column: 1;
-        grid-row: 2;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-    }}
-
-    .patient-image {{
-        grid-column: 2;
-        grid-row: 1;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-    }}
-
-    .doctor-input {{
-        grid-column: 2;
-        grid-row: 2;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-    }}
-
-    .patient-input {{
-        grid-column: 1;
-        grid-row: 1;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-    }}
-
-    img {{
-        max-width: 100%;
-        height: auto;
-        border-radius: 8px; /* Rounded corners for the images */
-    }}
-
-    input[type="text"] {{
-        width: 90%;
-        padding: 10px;
-        margin: 10px;
-        border: none;
-        border-radius: 5px;
-    }}
-</style>
-</head>
-<body>
-    <div class="conversation-container">
-        <div class="doctor-image">
-            <img src="data:image/png;base64,{student_url}" alt="Doctor" />
-        </div>
-        <div class="patient-image">
-            <img src="data:image/gif;base64,{patient_url}" alt="Patient" />
-        </div>
-        <div class="doctor-input">
-                  <span id="doctor_message">You: {st.session_state.get('user_inputs') or ''}</span>
-        </div>
-        <div class="patient-input">
-                  <span id="patient_message">{'Patient: '+st.session_state.get('patient_response') if st.session_state.get('patient_response') else '...'}</span>
-        </div>
-    </div>
-</body>
-</html>
-
-""", height=500)
-            
-        elif st.session_state.scenario_tab_index == ScenarioTabIndex.GRADER_LLM:
-            st.session_state.grader_output = "" if not st.session_state.get("grader_output") else st.session_state.grader_output
-            def get_grades():
-                txt = f"""
-<summary>
-    {st.session_state.diagnosis}
-</summary>
-<differential-1>
-    {st.session_state.differential_1}
-</differential-1>
-<differential-2>
-    {st.session_state.differential_2}
-</differential-2>
-<differential-3>
-    {st.session_state.differential_3}
-</differential-3>
-"""
-                response = st.session_state.chain2.invoke(txt)
-                st.session_state.grader_output = response
-            st.session_state.has_llm_output = bool(st.session_state.get("grader_output"))
-             ## TODO: False for now, need check llm output!
-            with st.expander("Your Diagnosis and Differentials", expanded=not st.session_state.has_llm_output):
-                st.session_state.diagnosis = st.text_area("Input your case summary and **main** diagnosis:", placeholder="This is a young gentleman with significant family history of stroke, and medical history of poorly-controlled hypertension. He presents with acute onset of bitemporal headache associated with dysarthria and meningism symptoms. Important negatives include the absence of focal neurological deficits, ataxia, and recent trauma.")
-                st.divider()
-                st.session_state.differential_1 = st.text_input("Differential 1")
-                st.session_state.differential_2 = st.text_input("Differential 2")
-                st.session_state.differential_3 = st.text_input("Differential 3")
-                with st.columns(6)[5]:
-                    send_for_grading = st.button("Get grades!", on_click=get_grades)
-            with st.expander("Your grade", expanded=st.session_state.has_llm_output):
-                if st.session_state.grader_output:
-                    st.write(st.session_state.grader_output.get("text").get("text"))
-            
-            # back_btn = st.button("back to LLM?", on_click=set_scenario_tab_index, args=[ScenarioTabIndex.PATIENT_LLM])
-            back_btn = st.button("New Scenario?", on_click=set_scenario_tab_index, args=[ScenarioTabIndex.SELECT_SCENARIO])
-
+            elif st.session_state.scenario_tab_index == ScenarioTabIndex.GRADER_LLM:
+                st.session_state.grader_output = "" if not st.session_state.get("grader_output") else st.session_state.grader_output
+                def get_grades():
+                    txt = f"""
+    <summary>
+        {st.session_state.diagnosis}
+    </summary>
+    <differential-1>
+        {st.session_state.differential_1}
+    </differential-1>
+    <differential-2>
+        {st.session_state.differential_2}
+    </differential-2>
+    <differential-3>
+        {st.session_state.differential_3}
+    </differential-3>
+    """
+                    response = st.session_state.chain2.invoke(txt)
+                    st.session_state.grader_output = response
+                st.session_state.has_llm_output = bool(st.session_state.get("grader_output"))
+                ## TODO: False for now, need check llm output!
+                with st.expander("Your Diagnosis and Differentials", expanded=not st.session_state.has_llm_output):
+                    st.session_state.diagnosis = st.text_area("Input your case summary and **main** diagnosis:", placeholder="This is a young gentleman with significant family history of stroke, and medical history of poorly-controlled hypertension. He presents with acute onset of bitemporal headache associated with dysarthria and meningism symptoms. Important negatives include the absence of focal neurological deficits, ataxia, and recent trauma.")
+                    st.divider()
+                    st.session_state.differential_1 = st.text_input("Differential 1")
+                    st.session_state.differential_2 = st.text_input("Differential 2")
+                    st.session_state.differential_3 = st.text_input("Differential 3")
+                    with st.columns(6)[5]:
+                        send_for_grading = st.button("Get grades!", on_click=get_grades)
+                with st.expander("Your grade", expanded=st.session_state.has_llm_output):
+                    if st.session_state.grader_output:
+                        st.write(st.session_state.grader_output.get("text").get("text"))
+                
+                # back_btn = st.button("back to LLM?", on_click=set_scenario_tab_index, args=[ScenarioTabIndex.PATIENT_LLM])
+                back_btn = st.button("New Scenario?", on_click=set_scenario_tab_index, args=[ScenarioTabIndex.SELECT_SCENARIO])
+        else:
+            pass
     with dashboard_tab:
         cred = db.cred
         # cred = credentials.Certificate(json.loads(os.environ.get("FIREBASE_CREDENTIAL")))
