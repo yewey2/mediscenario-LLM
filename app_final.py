@@ -14,11 +14,6 @@ import os
 # parentdir = os.path.dirname(currentdir)
 # sys.path.append(parentdir)
 
-
-
-
-# ## ----------------------------------------------------------------
-# ## LLM Part
 import openai
 from langchain_openai import ChatOpenAI, OpenAI, OpenAIEmbeddings
 import tiktoken
@@ -39,6 +34,13 @@ from langchain.chains.conversation.memory import ConversationBufferWindowMemory 
 import os, dotenv
 from dotenv import load_dotenv
 load_dotenv()
+
+import firebase_admin, json
+from firebase_admin import credentials, storage, firestore
+import plotly.express as px
+import plotly.graph_objects as go
+import pandas as pd
+
 
 if not os.path.isdir("./.streamlit"):
     os.mkdir("./.streamlit")
@@ -83,25 +85,6 @@ Vomiting
 Weakness
 Weakness2""".split("\n")
 
-# if "selected_index" not in st.session_state:
-#     st.session_state.selected_index = 3
-    
-# if "index_selectbox" not in st.session_state:
-#     st.session_state.index_selectbox = "Headache"
-
-# index_selectbox = st.selectbox("Select index",indexes, index=int(st.session_state.selected_index))
-
-# if index_selectbox != indexes[st.session_state.selected_index]:
-#     st.session_state.selected_index = indexes.index(index_selectbox)
-#     st.session_state.index_selectbox = index_selectbox
-#     del st.session_state["store"]
-#     del st.session_state["store2"]
-#     del st.session_state["retriever"]
-#     del st.session_state["retriever2"]
-#     del st.session_state["chain"]
-#     del st.session_state["chain2"]
-
-
 model_name = "bge-large-en-v1.5"
 model_kwargs = {"device": "cpu"}
 encode_kwargs = {"normalize_embeddings": True}
@@ -122,73 +105,29 @@ if "llm_gpt4" not in st.session_state:
     st.session_state.llm_gpt4 = ChatOpenAI(model_name="gpt-4-1106-preview", temperature=0)
 llm_gpt4 = st.session_state.llm_gpt4
 
-# ## ------------------------------------------------------------------------------------------------
-# ## Patient part
-
-# index_name = f"indexes/{st.session_state.index_selectbox}/QA"
-
-# if "store" not in st.session_state:
-#     st.session_state.store = db.get_store(index_name, embeddings=embeddings)
-# store = st.session_state.store
 
 if "TEMPLATE" not in st.session_state:
     with open('templates/patient.txt', 'r') as file: 
         TEMPLATE = file.read()
     st.session_state.TEMPLATE = TEMPLATE
 TEMPLATE = st.session_state.TEMPLATE
-# with st.expander("Patient Prompt"):
-#     TEMPLATE = st.text_area("Patient Prompt", value=st.session_state.TEMPLATE)
 
 prompt = PromptTemplate(
     input_variables = ["question", "context"],
     template = st.session_state.TEMPLATE
 )
 
-# if "retriever" not in st.session_state:
-#     st.session_state.retriever = store.as_retriever(search_type="similarity", search_kwargs={"k":2})
-# retriever = st.session_state.retriever
-
 def format_docs(docs):
     return "\n--------------------\n".join(doc.page_content for doc in docs)
 
 
-# if "memory" not in st.session_state:
-#     st.session_state.memory = ConversationBufferWindowMemory(
-#         llm=llm, memory_key="chat_history", input_key="question", 
-#         k=5, human_prefix="student", ai_prefix="patient",)
-# memory = st.session_state.memory
-
-
-# if ("chain" not in st.session_state
-#     or 
-#     st.session_state.TEMPLATE != TEMPLATE):
-#     st.session_state.chain = (
-#     {
-#         "context": retriever | format_docs, 
-#         "question": RunnablePassthrough()
-#         } | 
-#     LLMChain(llm=llm, prompt=prompt, memory=memory, verbose=False)
-# )
-# chain = st.session_state.chain
-
 sp_mapper = {"human":"student","ai":"patient", "user":"student","assistant":"patient"}
-
-# ## ------------------------------------------------------------------------------------------------
-# ## ------------------------------------------------------------------------------------------------
-# ## Grader part
-# index_name = f"indexes/{st.session_state.index_selectbox}/Rubric"
-
-# if "store2" not in st.session_state:
-#     st.session_state.store2 = db.get_store(index_name, embeddings=embeddings)
-# store2 = st.session_state.store2
 
 if "TEMPLATE2" not in st.session_state:
     with open('templates/grader.txt', 'r') as file: 
         TEMPLATE2 = file.read()
     st.session_state.TEMPLATE2 = TEMPLATE2
 TEMPLATE2 = st.session_state.TEMPLATE2
-# with st.expander("Grader Prompt"):
-#     TEMPLATE2 = st.text_area("Grader Prompt", value=st.session_state.TEMPLATE2)
 
 prompt2 = PromptTemplate(
     input_variables = ["question", "context", "history"],
@@ -198,178 +137,6 @@ prompt2 = PromptTemplate(
 def get_patient_chat_history(_):
     return st.session_state.get("patient_chat_history")
 
-# if "retriever2" not in st.session_state:
-#     st.session_state.retriever2 = store2.as_retriever(search_type="similarity", search_kwargs={"k":2})
-# retriever2 = st.session_state.retriever2
-
-# def format_docs(docs):
-#     return "\n--------------------\n".join(doc.page_content for doc in docs)
-
-
-# fake_history = '\n'.join([(sp_mapper.get(i.type, i.type) + ": "+ i.content) for i in memory.chat_memory.messages])
-# fake_history = '\n'.join([(sp_mapper.get(i['role'], i['role']) + ": "+ i['content']) for i in st.session_state.messages_1])
-# st.write(fake_history)
-
-# def y(_): 
-#     return fake_history
-
-# if ("chain2" not in st.session_state
-#     or 
-#     st.session_state.TEMPLATE2 != TEMPLATE2):
-#     st.session_state.chain2 = (
-#     {
-#         "context": retriever2 | format_docs, 
-#         "history": y,
-#         "question": RunnablePassthrough(),
-#         } | 
-
-#         # LLMChain(llm=llm_i, prompt=prompt2, verbose=False ) #|
-#         LLMChain(llm=llm_gpt4, prompt=prompt2, verbose=False ) #|
-#         | {
-#             "json": itemgetter("text"),
-#             "text": (
-#                 LLMChain(
-#                     llm=llm, 
-#                     prompt=PromptTemplate(
-#                         input_variables=["text"],
-#                         template="Interpret the following JSON of the student's grades, and do a write-up for each section.\n\n```json\n{text}\n```"),
-#                         verbose=False)
-#                 )
-#     }
-# )
-# chain2 = st.session_state.chain2
-
-# ## ------------------------------------------------------------------------------------------------
-# ## ------------------------------------------------------------------------------------------------
-# ## Streamlit now
-
-# # from dotenv import load_dotenv
-# # import os
-# # load_dotenv()
-# # key = os.environ.get("OPENAI_API_KEY")
-# # client = OpenAI(api_key=key)
-
-
-# if st.button("Clear History and Memory", type="primary"):
-#     st.session_state.messages_1 = []
-#     st.session_state.messages_2 = []
-#     st.session_state.memory = ConversationBufferWindowMemory(llm=llm, memory_key="chat_history", input_key="question" )
-#     memory = st.session_state.memory
-
-# ## Testing HTML
-# # html_string = """
-# # <canvas></canvas>
-
-
-# # <script>
-# #     canvas = document.querySelector('canvas');
-# #     canvas.width = 1024;
-# #     canvas.height = 576;
-# #     console.log(canvas);
-
-# #     const c = canvas.getContext('2d');
-# #     c.fillStyle = "green";
-# #     c.fillRect(0,0,canvas.width,canvas.height);
-
-# #     const img = new Image();
-# #     img.src = "./tksfordumtrive.png";
-# #     c.drawImage(img,  10, 10);
-# # </script>
-
-# # <style>
-# #     body {
-# #         margin: 0;
-# #     }
-# # </style>
-# # """
-# # components.html(html_string,
-# #                 width=1280,
-# #                 height=640)
-
-
-# st.write("Timer has been removed, switch with this button")
-
-# if st.button(f"Switch to {'PATIENT' if st.session_state.active_chat==2 else 'GRADER'}"+".... Buggy button, please double click"):
-#     st.session_state.active_chat = 3 - st.session_state.active_chat
-
-# # st.write("Currently in " + ('PATIENT' if st.session_state.active_chat==2 else 'GRADER'))
-
-# # Create two columns for the two chat interfaces
-# col1, col2 = st.columns(2)
-
-# # First chat interface
-# with col1:
-#     st.subheader("Student LLM")
-#     for message in st.session_state.messages_1:
-#         with st.chat_message(message["role"]):
-#             st.markdown(message["content"])
-
-# # Second chat interface
-# with col2:
-#     # st.write("pls dun spam this, its tons of tokens cos chat history")
-#     st.subheader("Grader LLM")
-#     st.write("grader takes a while to load... please be patient")
-#     for message in st.session_state.messages_2:
-#         with st.chat_message(message["role"]):
-#             st.markdown(message["content"])
-
-# # Timer and Input
-# # time_left = None
-# # if st.session_state.start_time:
-# #     time_elapsed = datetime.datetime.now() - st.session_state.start_time
-# #     time_left = datetime.timedelta(minutes=10) - time_elapsed
-# #     st.write(f"Time left: {time_left}")
-
-# # if time_left is None or time_left > datetime.timedelta(0):
-# #     # Chat 1 is active
-# #     prompt = st.text_input("Enter your message for Chat 1:")
-# #     active_chat = 1
-# #     messages = st.session_state.messages_1
-# # elif time_left and time_left <= datetime.timedelta(0):
-# #     # Chat 2 is active
-# #     prompt = st.text_input("Enter your message for Chat 2:")
-# #     active_chat = 2
-# #     messages = st.session_state.messages_2
-
-# if st.session_state.active_chat==1:
-#     text_prompt = st.text_input("Enter your message for PATIENT")
-#     messages = st.session_state.messages_1
-# else:
-#     text_prompt = st.text_input("Enter your message for GRADER")
-#     messages = st.session_state.messages_2
-
-
-# from langchain.callbacks.manager import tracing_v2_enabled
-# from uuid import uuid4
-# import os
-
-# if text_prompt:
-#     messages.append({"role": "user", "content": text_prompt})
-
-#     with (col1 if st.session_state.active_chat == 1 else col2):
-#         with st.chat_message("user"):
-#             st.markdown(text_prompt)
-
-#     with (col1 if st.session_state.active_chat == 1 else col2):
-#         with st.chat_message("assistant"):
-#             message_placeholder = st.empty()
-#             if True: ## with tracing_v2_enabled(project_name = "streamlit"):
-#                 if st.session_state.active_chat==1:
-#                     full_response = chain.invoke(text_prompt).get("text")
-#                 else:
-#                     full_response = chain2.invoke(text_prompt).get("text").get("text")
-#             message_placeholder.markdown(full_response)
-#             messages.append({"role": "assistant", "content": full_response})
-
-            
-# st.write('fake history is:')
-# st.write(y(""))
-# st.write('done')
-
-
-
-
-## ====================
 
 if not st.session_state.get("scenario_list", None):
     st.session_state.scenario_list = indexes
@@ -497,15 +264,15 @@ else:
         st.session_state.scenario_tab_index=x
         return None
     
-    def select_scenario_and_change_tab(_):
-        set_scenario_tab_index(ScenarioTabIndex.PATIENT_LLM)
+    # def select_scenario_and_change_tab(_):
+    #     set_scenario_tab_index(ScenarioTabIndex.PATIENT_LLM)
     
     def go_to_patient_llm():
         selected_scenario = st.session_state.get('selected_scenario')
         if selected_scenario is None or selected_scenario < 0:
             st.warning("Please select a scenario!")
         else:
-            ## TODO: Clear state for time, LLM, Index, etc
+            st.session_state.start_time = datetime.datetime.now()
             states = ["store", "store2","retriever","retriever2","chain","chain2"]
             for state_to_del in states:
                 if state_to_del in st.session_state:
@@ -549,14 +316,14 @@ else:
             col1, col2, col3 = st.columns([1,3,1])
             with col1:
                 back_to_scenario_btn = st.button("Back to selection", on_click=set_scenario_tab_index, args=[ScenarioTabIndex.SELECT_SCENARIO])
-            with col3: 
-                start_timer_button = st.button("START")
+            # with col3: 
+            #     start_timer_button = st.button("START")
 
             with col2:
                 TIME_LIMIT = 60*10 ## to change to 10 minutes
                 time.sleep(1)
-                if start_timer_button:
-                    st.session_state.start_time = datetime.datetime.now()
+                # if start_timer_button:
+                #     st.session_state.start_time = datetime.datetime.now()
                 # st.session_state.time = -1 if not st.session_state.get('time') else st.session_state.get('time') 
                 st.session_state.start_time = False if not st.session_state.get('start_time') else st.session_state.start_time
                     
@@ -638,9 +405,9 @@ else:
                     """,
                     )
 
-            with open("./public/char.png", "rb") as f:
+            with open("./public/chars/Female_talk.gif", "rb") as f:
                 contents = f.read()
-            data_url = base64.b64encode(contents).decode("utf-8")
+            student_url = base64.b64encode(contents).decode("utf-8")
                 
             with open("./public/chars/Male_talk.gif", "rb") as f:
                 contents = f.read()
@@ -660,26 +427,83 @@ else:
                     st.session_state.patient_response = response
             with interactive_container:
                 html(f"""
-                 
-                <style>
-                    @import url('https://fonts.googleapis.com/css2?family=Pixelify+Sans&display=swap');
-                </style>
+<style>
+    .conversation-container {{
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        grid-template-rows: 1fr 1fr;
+        gap: 10px;
+        width: 100%;
+        height: 100%;
+        background-color: #add8e6; /* Soothing blue background */
+    }}
+    
+    .doctor-image {{
+        grid-column: 1;
+        grid-row: 2;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }}
 
-                <style>
-                    html {{
-                        font-family: 'Pixelify Sans', monospace, serif;
-                 }}
-                 </style>
-                 <div>
-                  <img src="data:image/png;base64,{data_url}" />
-                  <span id="user_input">You: {st.session_state.get('user_inputs') or ''}</span>
-                 </div>
-                 
-                 <div>
-                  <img src="data:image/gif;base64,{patient_url}" /><br/>
-                  <span id="bot_response">{'Patient: '+st.session_state.get('patient_response') if st.session_state.get('patient_response') else '...'}</span>
-                 </div>
-            """, height=500)
+    .patient-image {{
+        grid-column: 2;
+        grid-row: 1;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }}
+
+    .doctor-input {{
+        grid-column: 2;
+        grid-row: 2;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }}
+
+    .patient-input {{
+        grid-column: 1;
+        grid-row: 1;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }}
+
+    img {{
+        max-width: 100%;
+        height: auto;
+        border-radius: 8px; /* Rounded corners for the images */
+    }}
+
+    input[type="text"] {{
+        width: 90%;
+        padding: 10px;
+        margin: 10px;
+        border: none;
+        border-radius: 5px;
+    }}
+</style>
+</head>
+<body>
+    <div class="conversation-container">
+        <div class="doctor-image">
+            <img src="data:image/png;base64,{student_url}" alt="Doctor" />
+        </div>
+        <div class="patient-image">
+            <img src="data:image/gif;base64,{patient_url}" alt="Patient" />
+        </div>
+        <div class="doctor-input">
+                  <span id="doctor_message">You: {st.session_state.get('user_inputs') or ''}</span>
+        </div>
+        <div class="patient-input">
+                  <span id="patient_message">{'Patient: '+st.session_state.get('patient_response') if st.session_state.get('patient_response') else '...'}</span>
+        </div>
+    </div>
+</body>
+</html>
+
+""", height=500)
             
         elif st.session_state.scenario_tab_index == ScenarioTabIndex.GRADER_LLM:
             st.session_state.grader_output = "" if not st.session_state.get("grader_output") else st.session_state.grader_output
@@ -710,7 +534,7 @@ else:
                 st.session_state.differential_3 = st.text_input("Differential 3")
                 with st.columns(6)[5]:
                     send_for_grading = st.button("Get grades!", on_click=get_grades)
-            with st.expander("Your rubrics", expanded=st.session_state.has_llm_output):
+            with st.expander("Your grade", expanded=st.session_state.has_llm_output):
                 if st.session_state.grader_output:
                     st.write(st.session_state.grader_output.get("text").get("text"))
             
@@ -718,14 +542,8 @@ else:
             back_btn = st.button("New Scenario?", on_click=set_scenario_tab_index, args=[ScenarioTabIndex.SELECT_SCENARIO])
 
     with dashboard_tab:
-        import dotenv
-        import firebase_admin, json
-        from firebase_admin import credentials, storage, firestore
-        import plotly.express as px
-        import plotly.graph_objects as go
-        import pandas as pd
-
-        cred = credentials.Certificate(json.loads(os.environ.get("FIREBASE_CREDENTIAL")))
+        cred = db.cred
+        # cred = credentials.Certificate(json.loads(os.environ.get("FIREBASE_CREDENTIAL")))
 
         # Initialize Firebase (if not already initialized)
         if not firebase_admin._apps:

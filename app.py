@@ -199,21 +199,16 @@ retriever2 = st.session_state.retriever2
 def format_docs(docs):
     return "\n--------------------\n".join(doc.page_content for doc in docs)
 
-
-# fake_history = '\n'.join([(sp_mapper.get(i.type, i.type) + ": "+ i.content) for i in memory.chat_memory.messages])
-fake_history = '\n'.join([(sp_mapper.get(i['role'], i['role']) + ": "+ i['content']) for i in st.session_state.messages_1])
-st.write(fake_history)
-
-def y(_): 
-    return fake_history
+def get_history(_): 
+    return '\n'.join([(sp_mapper.get(i['role'], i['role']) + ": "+ i['content']) for i in st.session_state.messages_1])
 
 if ("chain2" not in st.session_state
     or 
     st.session_state.TEMPLATE2 != TEMPLATE2):
     st.session_state.chain2 = (
     {
-        "context": retriever | format_docs, 
-        "history": y,
+        "context": retriever2 | format_docs, 
+        "history": get_history,
         "question": RunnablePassthrough(),
         } | 
 
@@ -337,10 +332,6 @@ from langchain.callbacks.manager import tracing_v2_enabled
 from uuid import uuid4
 import os
 
-os.environ['LANGCHAIN_TRACING_V2']='true'
-os.environ['LANGCHAIN_ENDPOINT']='https://api.smith.langchain.com'
-os.environ['LANGCHAIN_API_KEY']='ls__4ad767c45b844e6a8d790e12f556d3ca'
-os.environ['LANGCHAIN_PROJECT']='streamlit'
 
 
 if text_prompt:
@@ -353,7 +344,7 @@ if text_prompt:
     with (col1 if st.session_state.active_chat == 1 else col2):
         with st.chat_message("assistant"):
             message_placeholder = st.empty()
-            with tracing_v2_enabled(project_name = "streamlit"):
+            if True: ## with tracing_v2_enabled(project_name = "streamlit"):
                 if st.session_state.active_chat==1:
                     full_response = chain.invoke(text_prompt).get("text")
                 else:
@@ -381,7 +372,3 @@ if text_prompt:
 #             count_down(int(time_in_seconds))
 # if __name__ == '__main__':
 #     main()
-            
-st.write('fake history is:')
-st.write(y(""))
-st.write('done')
