@@ -230,6 +230,14 @@ if not st.session_state.get("username"):
     username = st.text_input("Username:")
     password = st.text_input("Password:", type="password")
     login_button = st.button("Login", on_click=validate_username, args=[username, password])
+    ll, rr = st.columns(2)
+    ## TODO: Sync login info usernames to firebase, and remove this portion
+    ll.header("Admin Login")
+    ll.write("Username: admin")
+    ll.write("Password: admin")
+    rr.header("Student Login")
+    rr.write("Username: student1")
+    rr.write("Password: password")
 
 else:
     if True: ## Says hello and logout 
