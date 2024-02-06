@@ -22,7 +22,8 @@ from langchain.prompts.prompt import PromptTemplate
 from operator import itemgetter
 from langchain.schema import StrOutputParser
 from langchain_core.output_parsers import StrOutputParser
-from langchain_core.runnables import RunnablePassthrough, RunnableLambda
+from langchain_core.runnables import RunnablePassthrough, RunnableLambda, RunnableParallel
+from langchain_core.runnables import chain
 
 import langchain_community.embeddings.huggingface
 from langchain_community.embeddings.huggingface import HuggingFaceBgeEmbeddings
@@ -134,6 +135,7 @@ prompt2 = PromptTemplate(
     template = st.session_state.TEMPLATE2
 )
 
+@chain
 def get_patient_chat_history(_):
     return st.session_state.get("patient_chat_history")
 
@@ -142,10 +144,6 @@ if not st.session_state.get("scenario_list", None):
     st.session_state.scenario_list = indexes
 
 def init_patient_llm():
-    if "messages_1" not in st.session_state:
-        st.session_state.messages_1 = []
-    ## messages 2?
-
     index_name = f"indexes/{st.session_state.scenario_list[st.session_state.selected_scenario]}/QA"
     if "store" not in st.session_state:
         st.session_state.store = db.get_store(index_name, embeddings=embeddings)
@@ -160,14 +158,15 @@ def init_patient_llm():
         or 
         st.session_state.TEMPLATE != TEMPLATE):
         st.session_state.chain = (
-        {
+        RunnableParallel({
             "context": st.session_state.retriever | format_docs, 
             "question": RunnablePassthrough()
-            } | 
+            }) | 
         LLMChain(llm=llm, prompt=prompt, memory=st.session_state.memory, verbose=False)
     )
 
 def init_grader_llm():
+    st.session_state["patient_chat_history"] = "History\n" + '\n'.join([(sp_mapper.get(i.type, i.type) + ": "+ i.content) for i in st.session_state.memory.chat_memory.messages])
     ## Grader
     index_name = f"indexes/{st.session_state.scenario_list[st.session_state.selected_scenario]}/Rubric"
     
@@ -186,11 +185,12 @@ def init_grader_llm():
         or 
         st.session_state.TEMPLATE2 != TEMPLATE2):
         st.session_state.chain2 = (
-        {
+        RunnableParallel({
             "context": st.session_state.retriever2 | format_docs, 
-            "history": RunnableLambda(get_patient_chat_history),
+            # "history": RunnableLambda(lambda _: "History\n" + '\n'.join([(sp_mapper.get(i.type, i.type) + ": "+ i.content) for i in st.session_state.memory.chat_memory.messages])),
+            "history": (get_patient_chat_history),
             "question": RunnablePassthrough(),
-            } | 
+            }) | 
 
             # LLMChain(llm=llm_i, prompt=prompt2, verbose=False ) #|
             LLMChain(llm=llm_gpt4, prompt=prompt2, verbose=False ) #|
@@ -510,6 +510,7 @@ else:
             elif st.session_state.scenario_tab_index == ScenarioTabIndex.GRADER_LLM:
                 st.session_state.grader_output = "" if not st.session_state.get("grader_output") else st.session_state.grader_output
                 def get_grades():
+                    st.session_state["patient_chat_history"] = "History\n" + '\n'.join([(sp_mapper.get(i.type, i.type) + ": "+ i.content) for i in st.session_state.get("memory").chat_memory.messages])
                     txt = f"""
     <summary>
         {st.session_state.diagnosis}
