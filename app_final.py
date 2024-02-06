@@ -22,7 +22,7 @@ from langchain.prompts.prompt import PromptTemplate
 from operator import itemgetter
 from langchain.schema import StrOutputParser
 from langchain_core.output_parsers import StrOutputParser
-from langchain_core.runnables import RunnablePassthrough
+from langchain_core.runnables import RunnablePassthrough, RunnableLambda
 
 import langchain_community.embeddings.huggingface
 from langchain_community.embeddings.huggingface import HuggingFaceBgeEmbeddings
@@ -188,7 +188,7 @@ def init_grader_llm():
         st.session_state.chain2 = (
         {
             "context": st.session_state.retriever2 | format_docs, 
-            "history": (get_patient_chat_history),
+            "history": RunnableLambda(get_patient_chat_history),
             "question": RunnablePassthrough(),
             } | 
 
