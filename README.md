@@ -17,7 +17,7 @@ pinned: false
 
 3. Add your own .env file based on the env.example (huggingface, openai, firebase tokens required)
 
-4. `streamlit run app.py`
+4. `streamlit run app_final.py`
 
 5. Open `localhost:8501`
 
