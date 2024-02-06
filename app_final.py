@@ -266,7 +266,7 @@ else:
         if selected_scenario is None or selected_scenario < 0:
             st.warning("Please select a scenario!")
         else:
-            st.session_state.start_time = datetime.datetime.now()
+            st.session_state.start_time = datetime.datetime.utcnow()
             states = ["store", "store2","retriever","retriever2","chain","chain2"]
             for state_to_del in states:
                 if state_to_del in st.session_state:
@@ -375,7 +375,7 @@ else:
                 var x = setInterval(function() {{
                     var start_time_str = "{st.session_state.start_time}";
                     var start_date = new Date(start_time_str);
-                    var curr_date = new Date();
+                    var curr_date = new Date.UTC();
                     var time_difference = curr_date - start_date;
                     var time_diff_secs = Math.floor(time_difference / 1000);
                     var time_left = {TIME_LIMIT} - time_diff_secs;
