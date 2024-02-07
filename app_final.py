@@ -165,48 +165,7 @@ def init_patient_llm():
         LLMChain(llm=llm, prompt=prompt, memory=st.session_state.memory, verbose=False)
     )
 
-def init_grader_llm():
-    st.session_state["patient_chat_history"] = "History\n" + '\n'.join([(sp_mapper.get(i.type, i.type) + ": "+ i.content) for i in st.session_state.memory.chat_memory.messages])
-    ## Grader
-    index_name = f"indexes/{st.session_state.scenario_list[st.session_state.selected_scenario]}/Rubric"
-    
-    ## Reset time
-    st.session_state.start_time = False
-
-    if "store2" not in st.session_state:
-        st.session_state.store2 = db.get_store(index_name, embeddings=embeddings)
-    if "retriever2" not in st.session_state:
-        st.session_state.retriever2 = st.session_state.store2.as_retriever(search_type="similarity", search_kwargs={"k":2})
-
-    ## Re-init history
-    st.session_state["patient_chat_history"] = "History\n" + '\n'.join([(sp_mapper.get(i.type, i.type) + ": "+ i.content) for i in st.session_state.memory.chat_memory.messages])
-
-    if ("chain2" not in st.session_state
-        or 
-        st.session_state.TEMPLATE2 != TEMPLATE2):
-        st.session_state.chain2 = (
-        RunnableParallel({
-            "context": st.session_state.retriever2 | format_docs, 
-            # "history": RunnableLambda(lambda _: "History\n" + '\n'.join([(sp_mapper.get(i.type, i.type) + ": "+ i.content) for i in st.session_state.memory.chat_memory.messages])),
-            "history": (get_patient_chat_history),
-            "question": RunnablePassthrough(),
-            }) | 
-
-            # LLMChain(llm=llm_i, prompt=prompt2, verbose=False ) #|
-            LLMChain(llm=llm_gpt4, prompt=prompt2, verbose=False ) #|
-            | {
-                "json": itemgetter("text"),
-                "text": (
-                    LLMChain(
-                        llm=llm, 
-                        prompt=PromptTemplate(
-                            input_variables=["text"],
-                            template="Interpret the following JSON of the student's grades, and do a write-up for each section.\n\n```json\n{text}\n```"),
-                            verbose=False)
-                    )
-        }
-    )
-
+# def init_grader_llm():
 
 login_info = {
     "bob":"builder",
@@ -266,7 +225,7 @@ else:
         if selected_scenario is None or selected_scenario < 0:
             st.warning("Please select a scenario!")
         else:
-            st.session_state.start_time = datetime.datetime.now()
+            st.session_state.start_time = datetime.datetime.utcnow()
             states = ["store", "store2","retriever","retriever2","chain","chain2"]
             for state_to_del in states:
                 if state_to_del in st.session_state:
@@ -375,7 +334,12 @@ else:
                 var x = setInterval(function() {{
                     var start_time_str = "{st.session_state.start_time}";
                     var start_date = new Date(start_time_str);
-                    var curr_date = new Date();
+                    // var curr_date = new Date();
+                    var utc_date_str = new Date().toUTCString().slice(0, -4);
+                    var curr_date = new Date(utc_date_str);
+                    // console.log(utc_date_str);
+                    // console.log("curr date", curr_date);
+                    // console.log("start date", start_date);
                     var time_difference = curr_date - start_date;
                     var time_diff_secs = Math.floor(time_difference / 1000);
                     var time_left = {TIME_LIMIT} - time_diff_secs;
@@ -412,7 +376,52 @@ else:
                 interactive_container = st.container()
                 user_input_col ,r = st.columns([4,1])
                 def to_grader_llm():
+                    if "chain2" in st.session_state:
+                        del st.session_state.chain2
+                    """
                     init_grader_llm()
+"""
+                    st.session_state["patient_chat_history"] = "History\n" + '\n'.join([(sp_mapper.get(i.type, i.type) + ": "+ i.content) for i in st.session_state.memory.chat_memory.messages])
+                    ## Grader
+                    index_name = f"indexes/{st.session_state.scenario_list[st.session_state.selected_scenario]}/Rubric"
+                    
+                    ## Reset time
+                    st.session_state.start_time = False
+
+                    if "store2" not in st.session_state:
+                        st.session_state.store2 = db.get_store(index_name, embeddings=embeddings)
+                    if "retriever2" not in st.session_state:
+                        st.session_state.retriever2 = st.session_state.store2.as_retriever(search_type="similarity", search_kwargs={"k":2})
+
+                    ## Re-init history
+                    st.session_state["patient_chat_history"] = "History\n" + '\n'.join([(sp_mapper.get(i.type, i.type) + ": "+ i.content) for i in st.session_state.memory.chat_memory.messages])
+
+                    if ("chain2" not in st.session_state
+                        or 
+                        st.session_state.TEMPLATE2 != TEMPLATE2):
+                        st.session_state.chain2 = (
+                        RunnableParallel({
+                            "context": st.session_state.retriever2 | format_docs, 
+                            # "history": RunnableLambda(lambda _: "History\n" + '\n'.join([(sp_mapper.get(i.type, i.type) + ": "+ i.content) for i in st.session_state.memory.chat_memory.messages])),
+                            "history": (get_patient_chat_history),
+                            "question": RunnablePassthrough(),
+                            }) | 
+
+                            # LLMChain(llm=llm_i, prompt=prompt2, verbose=False ) #|
+                            LLMChain(llm=llm_gpt4, prompt=prompt2, verbose=False ) #|
+                            | {
+                                "json": itemgetter("text"),
+                                "text": (
+                                    LLMChain(
+                                        llm=llm, 
+                                        prompt=PromptTemplate(
+                                            input_variables=["text"],
+                                            template="Interpret the following JSON of the student's grades, and do a write-up for each section.\n\n```json\n{text}\n```"),
+                                            verbose=False)
+                                    )
+                        }
+                    )
+
                     set_scenario_tab_index(ScenarioTabIndex.GRADER_LLM)
 
                 with r:
