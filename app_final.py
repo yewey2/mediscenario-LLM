@@ -347,7 +347,7 @@ else:
                     var secs = time_left % 60;
                     var fmins = mins.toString().padStart(2, '0');
                     var fsecs = secs.toString().padStart(2, '0');
-                    console.log("run");
+                    // console.log("run");
 
                     if (start_time_str == "False") {{
                         document.getElementById("ttime").innerHTML = 'Press "Start" to start!';
@@ -396,6 +396,7 @@ else:
                     ## Re-init history
                     st.session_state["patient_chat_history"] = "History\n" + '\n'.join([(sp_mapper.get(i.type, i.type) + ": "+ i.content) for i in st.session_state.memory.chat_memory.messages])
 
+                    new_history = "History\n" + '\n'.join([(sp_mapper.get(i.type, i.type) + ": "+ i.content) for i in st.session_state.memory.chat_memory.messages])
                     if ("chain2" not in st.session_state
                         or 
                         st.session_state.TEMPLATE2 != TEMPLATE2):
@@ -403,7 +404,8 @@ else:
                         RunnableParallel({
                             "context": st.session_state.retriever2 | format_docs, 
                             # "history": RunnableLambda(lambda _: "History\n" + '\n'.join([(sp_mapper.get(i.type, i.type) + ": "+ i.content) for i in st.session_state.memory.chat_memory.messages])),
-                            "history": (get_patient_chat_history),
+                            # "history": (get_patient_chat_history),
+                            "history": RunnableLambda(lambda _: new_history),
                             "question": RunnablePassthrough(),
                             }) | 
 
