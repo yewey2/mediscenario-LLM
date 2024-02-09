@@ -901,7 +901,7 @@ else:
         store_gen = st.session_state.store_gen
 
         def topk(searchKW):
-            search_r = st.session_state.store.similarity_search(searchKW, k=5)
+            search_r = st.session_state.store_gen.similarity_search(searchKW, k=5)
             return [x.page_content for x in search_r]
 
         if 'searchbtn_clicked' not in st.session_state:
