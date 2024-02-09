@@ -42,6 +42,7 @@ import plotly.express as px
 import plotly.graph_objects as go
 import pandas as pd
 
+import networkx as nx
 
 if not os.path.isdir("./.streamlit"):
     os.mkdir("./.streamlit")
@@ -826,19 +827,19 @@ else:
         st.title("Medical Scenario Generator (for Admins)")
 
         ## Hardcode scenarios for now, 
-        indexes = """ 
+        indexes_gen = """ 
         aortic dissection
         anemia
         cystitis
         pneumonia
         """.split("\n")
 
-        if "selected_index" not in st.session_state:
-            st.session_state.selected_index = 0
+        if "selected_index_gen" not in st.session_state:
+            st.session_state.selected_index_gen = 0
     
-        if "search_selectbox" not in st.session_state:
-            st.session_state.search_selectbox = " "
-        #    st.session_state.index_selectbox = "Headache"
+        if "search_selectbox_gen" not in st.session_state:
+            st.session_state.search_selectbox_gen = " "
+        #    st.session_state.index_selectbox_gen = "Headache"
 
         if "search_freetext" not in st.session_state:
             st.session_state.search_freetext = " "
@@ -847,7 +848,7 @@ else:
         #index_selectbox = st_tags(
         #    label='What medical condition would you like to generate a scenario for?',
         #    text='Input here ...',
-        #    suggestions=indexes,
+        #    suggestions=indexes_gen,
         #    value = ' ',
         #    maxtags = 1,
         #    key='0')
@@ -867,53 +868,41 @@ else:
         #    st.session_state.selected_index = indexes.index(search_selectbox)
         #    st.session_state.search_selectbox = search_selectbox
 
-        if "openai_model" not in st.session_state:
-            st.session_state["openai_model"] = "gpt-3.5-turbo"
-
-        if "active_chat" not in st.session_state:
-            st.session_state.active_chat = 1
+        if "openai_model_gen" not in st.session_state:
+            st.session_state["openai_model_gen"] = "gpt-3.5-turbo"
 
         model_name = "pritamdeka/S-PubMedBert-MS-MARCO"
         model_kwargs = {"device": "cpu"}
         # model_kwargs = {"device": "cuda"}
         encode_kwargs = {"normalize_embeddings": True}
 
-        if "embeddings" not in st.session_state:
-            st.session_state.embeddings = HuggingFaceEmbeddings(
+        if "embeddings_gen" not in st.session_state:
+            st.session_state.embeddings_gen = HuggingFaceEmbeddings(
             model_name=model_name,
             model_kwargs = model_kwargs,
             encode_kwargs = encode_kwargs)
-        embeddings = st.session_state.embeddings
-        if "llm" not in st.session_state:
-            st.session_state.llm = ChatOpenAI(model_name="gpt-3.5-turbo-1106", temperature=0)
-        llm = st.session_state.llm
+        embeddings_gen = st.session_state.embeddings_gen
+        if "llm_gen" not in st.session_state:
+            st.session_state.llm_gen = ChatOpenAI(model_name="gpt-3.5-turbo-1106", temperature=0)
         #if "llm" not in st.session_state:
         #    st.session_state.llm = OpenAI(model_name="gpt-3.5-turbo-instruct", temperature=0)
         #llm = st.session_state.llm
         #if "llm" not in st.session_state:
         #    st.session_state.llm = ChatOpenAI(model_name="gpt-4-1106-preview", temperature=0)
-        llm = st.session_state.llm
+        llm_gen = st.session_state.llm_gen
 
         ## ------------------------------------------------------------------------------------------------
         ## Generator part
-        index_name = f"indexes/faiss_index_large_v2"
+        index_name_gen = f"indexes/faiss_index_large_v2"
 
-        if "store" not in st.session_state:
-            #st.session_state.store = FAISS.load_local(index_name, embeddings)
-            st.session_state.store = db.get_store(index_name, embeddings=embeddings)
-            #st.session_state.store.similarity_search('hello')
-        store = st.session_state.store
+        if "store_gen" not in st.session_state:
+            #st.session_state.store_gen = FAISS.load_local(index_name_gen, embeddings_gen)
+            st.session_state.store_gen = db.get_store(index_name_gen, embeddings=embeddings_gen)
+        store_gen = st.session_state.store_gen
 
         def topk(searchKW):
             search_r = st.session_state.store.similarity_search(searchKW, k=5)
             return [x.page_content for x in search_r]
-
-        #def onSelectButton(s_index):
-        #    topkindexes = topk(s_index) #return top 5 list of similiar diseases
-        #    return selected_options
-
-        #selectButton = st.button(on_click = onSelectButton(st.session_state.index_selectbox))
-        #selectButton = st.button("Search")
 
         if 'searchbtn_clicked' not in st.session_state:
             st.session_state['searchbtn_clicked'] = False
@@ -940,13 +929,13 @@ else:
                         col2.write('')
                 else:
                     st.markdown('---')
-                    st.write("No results found. Perhaps try another condition? Some examples that work: "+', '.join(indexes))
+                    st.write("No results found. Perhaps try another condition? Some examples that work: "+', '.join(indexes_gen))
 
             if search_freetext != " ":
                 options = topk(search_freetext)
                 searchInner(options)
             else:
-                options = topk(indexes[st.session_state.selected_index])
+                options = topk(indexes_gen[st.session_state.selected_index])
                 searchInner(options)
 
         st.write(st.session_state['selected_option'])
@@ -972,10 +961,10 @@ else:
         if 'genbtn_clicked' not in st.session_state:
             st.session_state['genbtn_clicked'] = False
 
-        if "TEMPLATE" not in st.session_state:
+        if "TEMPLATE_gen" not in st.session_state:
             with open('templates/kgen.txt', 'r') as file: 
-                TEMPLATE = file.read()
-            st.session_state.TEMPLATE = TEMPLATE
+                TEMPLATE_gen = file.read()
+            st.session_state.TEMPLATE_gen = TEMPLATE_gen
 
         ### ------------------------------------------------------------------------------------------------
         ### DEBUGGING CODE
@@ -985,9 +974,9 @@ else:
         ### ------------------------------------------------------------------------------------------------
 
 
-        prompt = PromptTemplate(
+        prompt_gen = PromptTemplate(
             input_variables = ["infostorekg"],
-            template = st.session_state.TEMPLATE
+            template = st.session_state.TEMPLATE_gen
         )
 
         if 'formautofill' not in st.session_state:
@@ -1019,16 +1008,16 @@ else:
                 infoPrompt = kgMatch(st.session_state.selected_option)
                 st.session_state.infostorekg = str(infoPrompt)
 
-                if ("chain" not in st.session_state
+                if ("chain_gen" not in st.session_state
                     or 
-                    st.session_state.TEMPLATE != TEMPLATE):
+                    st.session_state.TEMPLATE_gen != TEMPLATE):
                     #st.session_state.chain = (
                     #{
                     #    "infostorekg": passState,
                     #    } | 
-                    #LLMChain(llm=llm, prompt=prompt, verbose=False)
-                    st.session_state.chain = LLMChain(llm=llm, prompt=prompt, verbose = False)
-                chain = st.session_state.chain
+                    #LLMChain(llm=llm_gen, prompt=prompt, verbose=False)
+                    st.session_state.chain_gen = LLMChain(llm=llm_gen, prompt=prompt_gen, verbose = False)
+                chain = st.session_state.chain_gen
 
                 st.session_state['formautofill'] = chain.invoke({"infostorekg": st.session_state.infostorekg}).get("text")
             else:
