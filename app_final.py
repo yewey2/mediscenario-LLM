@@ -26,7 +26,7 @@ from langchain_core.runnables import RunnablePassthrough, RunnableLambda, Runnab
 from langchain_core.runnables import chain
 
 import langchain_community.embeddings.huggingface
-from langchain_community.embeddings.huggingface import HuggingFaceBgeEmbeddings
+from langchain_community.embeddings.huggingface import HuggingFaceBgeEmbeddings, HuggingFaceEmbeddings
 from langchain_community.vectorstores import FAISS
 
 from langchain.chains import LLMChain
