@@ -1143,8 +1143,8 @@ else:
                 submitted = st.form_submit_button("Submit")
                 if submitted:
                     #conDict.send(to firebase, with key) # retrieve from key
-                    st.write("check out your new scenario here!")
-                    loadScenario = st.button("Go to patient simulator (currently not implemented)")
+                    st.write("check out your new scenario here! (not implemented yet)")
+                    #loadScenario = st.button("Go to patient simulator (currently not implemented)")
         else:
             with st.form("empty_form"):
                 st.write("Blank Form")
@@ -1170,5 +1170,5 @@ else:
                 submitted_empty = st.form_submit_button("Submit")
                 if submitted_empty:
                     #conDict.send(to firebase, with key) # retrieve from key
-                    st.write("check out your new scenario here!")
-                    loadScenario = st.button("Go to patient simulator (currently not implemented)")
+                    st.write("check out your new scenario here! (not implemented yet)")
+                    #loadScenario = st.button("Go to patient simulator (currently not implemented)")
