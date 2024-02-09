@@ -15,3 +15,4 @@ firebase-admin
 plotly
 torch==2.1.2
 streamlit_authenticator
+networkx

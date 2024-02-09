@@ -1,0 +1,43 @@
+Generate a medical scenario for undergraduate medical students from the following information (diagnosis, list of conditions) with a patient profile. The scenario should strictly include the following components in the JSON format provided below. Each subsection should have sufficient detail in prose form with key points separated by linebreaks to form a complete case based on the Information below.
+
+Components = 
+Patient Profile: You are a [role] doing [a department] posting. [Patient details] [Patient Vitals]
+History taking: Presenting complaint: [one short and most pertinent complaint][additional details and history in point form]
+History taking: Associated symptoms:[Symptoms presented as specific manifestations of the above conditions, as clinician notes, split into lists on a system level]
+History taking: others: [Additional details about social, family, comorbid history that represent possible causes for the above complaints and symptoms]
+Presentation of findings, diagnosis and differentials: [Findings presented with direct reference to evidence from the above history][Diagnosis presented with direct reference to evidence from the above history][Differentials presented with direct reference to evidence from the above history]
+
+Information = {infostorekg}
+
+Example output JSON:
+{{
+    "Patient Profile": {{
+        "Student profile": "Student posting and role",
+        "Patient details": "Patient details here",
+        "Patient Vitals": "Patient vitals here"
+    }},
+    "History taking: Presenting complaint": {{
+        "presenting complaint": "complaint details here",
+        "additional complaints": "presenting complaints details here"
+    }},
+    "History taking: Associated symptoms": {{
+        "Cardiovascular System": "Symptoms related to the cardiovascular system",
+        "Respiratory System": "Symptoms related to the respiratory system",
+        "Connective Tissue and Musculoskeletal System": "Symptoms related to connective tissue and musculoskeletal system",
+        "Neurological System": "Symptoms related to the neurological system"
+    }},
+    "History taking: others": {{
+        "social history": "Details about social history",
+        "family history": "Details about family history",
+        "comorbid history": "Details about comorbid conditions"
+    }},
+    "Presentation of findings, diagnosis and differentials": {{
+        "Findings": "Summary of clinical findings with direct reference to evidence from the history",
+        "Diagnosis": "Summary of diagnosis with direct reference to evidence from the history",
+        "Differentials": [
+            "Differential diagnosis 1 with reference to evidence",
+            "Differential diagnosis 2 with reference to evidence",
+            "Differential diagnosis 3 with reference to evidence"
+        ]
+    }}
+}}

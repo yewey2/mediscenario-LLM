@@ -26,7 +26,7 @@ from langchain_core.runnables import RunnablePassthrough, RunnableLambda, Runnab
 from langchain_core.runnables import chain
 
 import langchain_community.embeddings.huggingface
-from langchain_community.embeddings.huggingface import HuggingFaceBgeEmbeddings
+from langchain_community.embeddings.huggingface import HuggingFaceBgeEmbeddings, HuggingFaceEmbeddings
 from langchain_community.vectorstores import FAISS
 
 from langchain.chains import LLMChain
@@ -42,6 +42,7 @@ import plotly.express as px
 import plotly.graph_objects as go
 import pandas as pd
 
+import networkx as nx
 
 if not os.path.isdir("./.streamlit"):
     os.mkdir("./.streamlit")
@@ -209,7 +210,7 @@ else:
             # Rerun the app to go back to the login view
             st.rerun()
 
-    scenario_tab, dashboard_tab = st.tabs(["Training", "Dashboard"])
+    scenario_tab, dashboard_tab, generate_tab = st.tabs(["Training", "Dashboard", "Generate Scenario"])
 
     class ScenarioTabIndex:
         SELECT_SCENARIO = 0
@@ -251,7 +252,7 @@ else:
                 #     rows.extend(st.columns(total_cols))
 
                 st.header(f"Selected Scenario: {st.session_state.scenario_list[st.session_state.selected_scenario] if st.session_state.selected_scenario>=0 else 'None'}")
-                st.button("Generate a new scenario")
+                #st.button("Generate a new scenario")
                 for i, scenario in enumerate(st.session_state.scenario_list):
                     if i % total_cols == 0:
                         rows.extend(st.columns(total_cols))
@@ -824,3 +825,352 @@ else:
         # Display the figure in Streamlit
         st.plotly_chart(fig, use_container_width=True)
             
+    with generate_tab:
+        st.title("Medical Scenario Generator (for Admins)")
+
+        ## Hardcode scenarios for now, 
+        indexes_gen = """ 
+        aortic dissection
+        anemia
+        cystitis
+        pneumonia
+        """.split("\n")
+
+        if "selected_index_gen" not in st.session_state:
+            st.session_state.selected_index_gen = 0
+    
+        if "search_selectbox_gen" not in st.session_state:
+            st.session_state.search_selectbox_gen = " "
+        #    st.session_state.index_selectbox_gen = "Headache"
+
+        if "search_freetext" not in st.session_state:
+            st.session_state.search_freetext = " "
+        #    st.session_state.index_selectbox = "Headache"
+
+        #index_selectbox = st_tags(
+        #    label='What medical condition would you like to generate a scenario for?',
+        #    text='Input here ...',
+        #    suggestions=indexes_gen,
+        #    value = ' ',
+        #    maxtags = 1,
+        #    key='0')
+
+        st.write('What medical condition would you like to generate a scenario for?')
+        search_freetext = st.text_input("Type your own", value = " ")
+        if search_freetext != st.session_state.search_freetext:
+            st.session_state.search_freetext = search_freetext
+
+        #hard0, free0 = st.columns(2)
+        #search_selectbox = hard0.selectbox(
+        #    'Choose one OR Type on the right',
+        #    indexes, index=0)
+        #search_freetext = free0.text_input("Type your own")
+        #
+        #if search_selectbox != indexes[st.session_state.selected_index]:
+        #    st.session_state.selected_index = indexes.index(search_selectbox)
+        #    st.session_state.search_selectbox = search_selectbox
+
+        if "openai_model_gen" not in st.session_state:
+            st.session_state["openai_model_gen"] = "gpt-3.5-turbo"
+
+        model_name = "pritamdeka/S-PubMedBert-MS-MARCO"
+        model_kwargs = {"device": "cpu"}
+        # model_kwargs = {"device": "cuda"}
+        encode_kwargs = {"normalize_embeddings": True}
+
+        if "embeddings_gen" not in st.session_state:
+            st.session_state.embeddings_gen = HuggingFaceEmbeddings(
+            model_name=model_name,
+            model_kwargs = model_kwargs,
+            encode_kwargs = encode_kwargs)
+        embeddings_gen = st.session_state.embeddings_gen
+        if "llm_gen" not in st.session_state:
+            st.session_state.llm_gen = ChatOpenAI(model_name="gpt-3.5-turbo-1106", temperature=0)
+        #if "llm" not in st.session_state:
+        #    st.session_state.llm = OpenAI(model_name="gpt-3.5-turbo-instruct", temperature=0)
+        #llm = st.session_state.llm
+        #if "llm" not in st.session_state:
+        #    st.session_state.llm = ChatOpenAI(model_name="gpt-4-1106-preview", temperature=0)
+        llm_gen = st.session_state.llm_gen
+
+        ## ------------------------------------------------------------------------------------------------
+        ## Generator part
+        index_name_gen = f"indexes/faiss_index_large_v2"
+
+        if "store_gen" not in st.session_state:
+            #st.session_state.store_gen = FAISS.load_local(index_name_gen, embeddings_gen)
+            st.session_state.store_gen = db.get_store(index_name_gen, embeddings=embeddings_gen)
+        store_gen = st.session_state.store_gen
+
+        def topk(searchKW):
+            search_r = st.session_state.store_gen.similarity_search(searchKW, k=5)
+            return [x.page_content for x in search_r]
+
+        if 'searchbtn_clicked' not in st.session_state:
+            st.session_state['searchbtn_clicked'] = False
+
+        if 'selected_option' not in st.session_state:
+            st.session_state['selected_option'] = ""
+
+        def search_callback():
+            st.session_state['searchbtn_clicked'] = True
+
+
+        if st.button('search', on_click=search_callback) or st.session_state['searchbtn_clicked'] or st.session_state.search_freetext != ' ':
+            def searchInner(searchOptions):
+                if len(searchOptions)>0:
+                    st.markdown('---')
+                    col1, col2 = st.columns(2)
+                    selected_options = col1.multiselect(
+                    'Choose the most relevant condition:',
+                    searchOptions, max_selections = 1)
+                    if len(selected_options)>0:
+                        col2.write(selected_options[0])
+                        st.session_state['selected_option'] = selected_options[0]
+                    else:
+                        col2.write('')
+                else:
+                    st.markdown('---')
+                    st.write("No results found. Perhaps try another condition? Some examples that work: "+', '.join(indexes_gen))
+
+            if search_freetext != " ":
+                options = topk(search_freetext)
+                searchInner(options)
+            else:
+                options = topk(indexes_gen[st.session_state.selected_index])
+                searchInner(options)
+
+        st.write(st.session_state['selected_option'])
+
+        ## ------------------------------------------------------------------------------------------------
+        ## LLM part
+
+        kg_name = f"kgstore"
+
+        if 'infostorekg' not in st.session_state:
+            st.session_state.infostorekg = ""
+
+        if "dfdisease" not in st.session_state:
+            st.session_state.dfdisease = db.get_csv(kg_name, isDiseases = True)
+        if "dffull" not in st.session_state:
+            st.session_state.dffull = db.get_csv(kg_name, isDiseases = False)
+        if "datanet" not in st.session_state:
+            st.session_state.datanet = nx.from_pandas_edgelist(st.session_state.dffull , 'x_id', 'y_id', ['relation'])
+        datanet = st.session_state.datanet
+        kgD = st.session_state.dfdisease[['group_id_bert','group_name_bert', 'mondo_definition', 'umls_description','orphanet_definition']].astype(str).values.tolist()
+        kgD2 = [' '.join([x[1]+'.']+list(set([y for y in x[2:] if y != 'nan']))) for x in kgD]
+
+        if 'genbtn_clicked' not in st.session_state:
+            st.session_state['genbtn_clicked'] = False
+
+        if "TEMPLATE_gen" not in st.session_state:
+            with open('templates/kgen.txt', 'r') as file: 
+                TEMPLATE_gen = file.read()
+            st.session_state.TEMPLATE_gen = TEMPLATE_gen
+
+        ### ------------------------------------------------------------------------------------------------
+        ### DEBUGGING CODE
+        #with st.expander("Patient Prompt"):
+        #    TEMPLATE = st.text_area("Patient Prompt", value=st.session_state.TEMPLATE)
+        #    st.session_state.TEMPLATE= TEMPLATE
+        ### ------------------------------------------------------------------------------------------------
+
+
+        prompt_gen = PromptTemplate(
+            input_variables = ["infostorekg"],
+            template = st.session_state.TEMPLATE_gen
+        )
+
+        if 'formautofill' not in st.session_state:
+            st.session_state['formautofill'] = ""
+
+        def gen_callback():
+            st.session_state['genbtn_clicked'] = True
+
+        def kgMatch(nodeName):
+            newidx = kgD[kgD2.index(nodeName)][0]
+            df_disease = st.session_state.dfdisease
+            df_full = st.session_state.dffull
+            desG = nx.single_source_dijkstra(datanet, newidx, cutoff = 1)
+            diseaseName = df_disease[df_disease.group_id_bert == newidx]['group_name_bert'].unique().tolist()[0]
+
+            phenotypeFilter = df_full[(df_full['x_id'] == newidx)| (df_full['y_id'] == newidx)]
+            phenotypeList =  [x for x in list(set(phenotypeFilter.y_name.unique().tolist()+ phenotypeFilter.x_name.unique().tolist())) if diseaseName not in x ]
+
+            return (diseaseName, phenotypeList)
+
+        def passState(dummy):
+            if "infostorekg" in st.session_state:        
+                return str(st.session_state.infostorekg)
+            else:
+                return dummy
+
+        if st.button('Generate scenario', on_click=gen_callback) or st.session_state['genbtn_clicked']:
+            if len(st.session_state.selected_option)>0:
+                infoPrompt = kgMatch(st.session_state.selected_option)
+                st.session_state.infostorekg = str(infoPrompt)
+
+                if ("chain_gen" not in st.session_state
+                    or 
+                    st.session_state.TEMPLATE_gen != TEMPLATE):
+                    #st.session_state.chain = (
+                    #{
+                    #    "infostorekg": passState,
+                    #    } | 
+                    #LLMChain(llm=llm_gen, prompt=prompt, verbose=False)
+                    st.session_state.chain_gen = LLMChain(llm=llm_gen, prompt=prompt_gen, verbose = False)
+                chain = st.session_state.chain_gen
+
+                st.session_state['formautofill'] = chain.invoke({"infostorekg": st.session_state.infostorekg}).get("text")
+            else:
+                st.warning('Please search and select a condition first!')
+
+        ## ------------------------------------------------------------------------------------------------
+        ## Forms part
+
+        conDict = {
+        }
+        rubDict = {'complaints': """Grade A: Elicits all of the above points in detail
+        Grade B: Explores both presenting complaints (fill in) and (others) in almost full detail and rules
+        out red flags
+        Grade C: Explores both presenting complaints (fill in) incompletely and looks out for
+        red flags
+        Grade D: Explores both presenting complaints incompletely (fill in) but does not rule
+        out any red flags/ explores one complaint and rules out at least one red flag
+        Grade E: Only explores one of the two presenting complaints (fill in)""", 
+        'syms': """Grade A: Explores at least (5) differentials in detail including (fill in) and elicits all * (6)
+        points
+        Grade B: Explores most (4) of the above systems including (fill in) and elicits all (6) *
+        points
+        Grade C: Explores most (4) of the above systems and elicits most (4-6) * points
+        Grade D: Explores more than half (3) of the above systems and elicits most (4-6) * points
+        Grade E: Explores only 1-2 of the above systems or asks less than half (1-3) * points""", 
+        'others': """Grade A: Elicits all (4) of the * points and past medical Hx of (fill in)
+        Grade B: Elicits all (4) of the * points and past medical Hx of (fill in),
+        but did not go into important details
+        Grade C: Elicits most (2-3) of the * points and past medical Hx of (fill in) in adequate detail
+        Grade D: Elicits most (2-3) of the * points and past medical Hx of (fill in)
+        but not in detail
+        Grade E: Elicits 0-1 of the * points or did not take past medical Hx of (fill in)(not taking a (specific history: fill in ) history will give the candidate this score for the domain)""", 
+        'findings': """Grade A: Presents all (4) of the * points, has (fill in) as top differentials with justification,
+        and at least one other differentials with adequate justification
+        Grade B: Presents most (2-3) of the * points, has (fill in)  as top differentials but inadequate
+        justification
+        Grade C: Presents most (2-3) of the * points, has either (fill in)  as top differential with at least
+        one other differential
+        Grade D: Presents most (2-3) of the *points OR only able to have 1 diagnosis without differential diagnosis
+        Grade E: Presents few (0-1) of * points OR unable to have any diagnosis or differentials"""
+        }
+
+
+        ### ------------------------------------------------------------------------------------------------
+        ### DEBUGGING CODE
+        #with st.expander("GPTOUTPUT"):
+        #    out = st.text_area(" ", value=st.session_state['formautofill'])
+        ### ------------------------------------------------------------------------------------------------
+
+        def splitReply():
+            gendata = json.loads(st.session_state['formautofill'], strict = False)
+            conditionsGen = []
+            def curseDict(possibleDict, defDict):
+                if type(defDict[possibleDict]) == str:
+                    return '\n' + possibleDict + ': '+ defDict[possibleDict]
+                elif type(defDict[possibleDict]) == list:
+                    if all(isinstance(item, str) for item in defDict[possibleDict]):
+                        return '\n' + possibleDict + ': '+ '\n '.join(defDict[possibleDict])
+                    else:
+                        returnList = [str(x) for x in defDict[possibleDict]]
+                        return '\n' + possibleDict + ': '+ '\n '.join(returnList)
+                elif type(defDict[possibleDict]) == dict:
+                    out = possibleDict
+                    for m in defDict[possibleDict]:
+                        out += curseDict(m, defDict[possibleDict])
+                    return out
+                else:
+                    return possibleDict+'\n'+ str(defDict[possibleDict])
+
+            for x in gendata:
+                if 'patient' in x.lower():
+                    conditionsGen.append(x)
+                    for y in gendata[x]:
+                        conditionsGen[-1] += curseDict(y, gendata[x])
+                    conDict['patients'] = conditionsGen[-1]
+                elif 'complain' in x.lower() or 'present' in x.lower():
+                    conditionsGen.append(x)
+                    for y in gendata[x]:
+                        conditionsGen[-1] += curseDict(y, gendata[x])
+                    conDict['complaints'] = conditionsGen[-1]
+
+                elif 'symptom' in x.lower() or 'associate' in x.lower():
+                    conditionsGen.append(x)
+                    for y in gendata[x]:
+                        conditionsGen[-1] += curseDict(y, gendata[x])
+                    conDict['syms'] = conditionsGen[-1]
+
+                elif 'other' in x.lower():
+                    conditionsGen.append(x)
+                    for y in gendata[x]:
+                        conditionsGen[-1] += curseDict(y, gendata[x])
+                    conDict['others'] = conditionsGen[-1]
+
+                if 'diagnosis' in x.lower() or 'differential' in x.lower():
+                    conditionsGen.append(x)
+                    for y in gendata[x]:
+                        conditionsGen[-1] += curseDict(y, gendata[x])
+                    conDict['findings'] = conditionsGen[-1]
+
+        if len(st.session_state['formautofill'])>0:
+            with st.form("filled_form"):
+                st.write("Generated Autofill")
+
+                splitReply()
+                with st.expander("Patient Scenario: Provided to students at the start of the exam"):
+                    patient_val_filled = st.text_area(" ", conDict['patients'], height=400, key="patientscenario")
+
+                st.write("Rubrics: Details students are expected to ask about and rubrics details for grading")
+                with st.expander("History Taking: Presenting Complaints"):
+                    patient_val_filled = st.text_area(" ", conDict['complaints'], height=400, key="complaints1")
+                    complaints_val_filled = st.text_area("Rubrics: Complaints", rubDict['complaints'], height=400, key="complaints2")
+                with st.expander("History Taking: Associated Symptoms"):
+                    syms_val_filled = st.text_area(" ", conDict['syms'], height=400, key="syms")
+                    syms_rubrics_filled = st.text_area("Rubrics: Symptoms", rubDict['syms'], height=400, key="syms2")
+                with st.expander("History Taking: Others"):
+                    others_val_filled = st.text_area(" ", conDict['others'], height=400, key="others")
+                    others_rubrics_filled = st.text_area("Rubrics: Others", rubDict['others'], height=400, key="others2")
+                with st.expander("Presentation of Findings, Diagnosis, and Differentials"):
+                    findings_val_filled = st.text_area(" ", conDict['findings'], height=400, key="findings")
+                    findings_rubrics_filled = st.text_area("Rubrics: Findings and Diagnosis",rubDict['findings'], height=400, key="findings2")
+
+                # Every form must have a submit button.
+                submitted = st.form_submit_button("Submit")
+                if submitted:
+                    #conDict.send(to firebase, with key) # retrieve from key
+                    st.write("check out your new scenario here! (not implemented yet)")
+                    #loadScenario = st.button("Go to patient simulator (currently not implemented)")
+        else:
+            with st.form("empty_form"):
+                st.write("Blank Form")
+                with st.expander("Patient Scenario: Provided to students at the start of the exam"):
+                    patient_val_filled = st.text_area(" ", height=400, key="patientscenario_empty")
+
+                st.write("Rubrics: Details students are expected to ask about and rubrics details for grading")
+                with st.expander("History Taking: Presenting Complaints"):
+                    col1_com, col2_com= st.columns(2)
+                    patient_val_filled = col1_com.text_area(" ", height=400, key="complaints_empty")
+                    complaints_val_filled = col2_com.text_area("Rubrics: Complaints", rubDict['complaints'], height=400, key="complaints2_empty")
+                with st.expander("History Taking: Associated Symptoms"):
+                    syms_val_filled = st.text_area(" ", height=400, key="syms_empty")
+                    syms_rubrics_filled = st.text_area("Rubrics: Symptoms", rubDict['syms'], height=400, key="syms2_empty")
+                with st.expander("History Taking: Others"):
+                    others_val_filled = st.text_area(" ", height=400, key="others_empty")
+                    others_rubrics_filled = st.text_area("Rubrics: Others", rubDict['others'], height=400, key="others2_empty")
+                with st.expander("Presentation of Findings, Diagnosis, and Differentials"):
+                    findings_val_filled = st.text_area(" ", height=400, key="findings_empty")
+                    findings_rubrics_filled = st.text_area("Rubrics: Findings and Diagnosis",rubDict['findings'], height=400, key="findings2_empty")
+
+                # Every form must have a submit button.
+                submitted_empty = st.form_submit_button("Submit")
+                if submitted_empty:
+                    #conDict.send(to firebase, with key) # retrieve from key
+                    st.write("check out your new scenario here! (not implemented yet)")
+                    #loadScenario = st.button("Go to patient simulator (currently not implemented)")
